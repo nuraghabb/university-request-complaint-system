@@ -1,0 +1,93 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+enum UserType {
+  ACADEMIC   // İç / Akademik
+  STUDENT    // İç / Öğrenci
+  CITIZEN    // Dış / Vatandaş
+}
+
+enum PetitionCategory {
+  TALEP          // Talep
+  SIKAYET        // Şikayet
+  BILGI_EDINME   // Bilgi Edinme
+  TESEKKUR       // Teşekkür
+  ONERI          // Öneri
+}
+
+enum TargetUnit {
+  REKTORLUK           // Rektörlük
+  OGRENCI_ISLERI      // Öğrenci İşleri
+  FEN_BILIMLERI       // Fen Bilimleri Fakültesi Dekanlığı
+  EDEBIYAT            // Edebiyat Fakültesi Dekanlığı
+  MUHENDISLIK         // Mühendislik Fakültesi Dekanlığı
+  IKTISAT             // İktisadi ve İdari Bilimler Fakültesi Dekanlığı
+  TIP                 // Tıp Fakültesi Dekanlığı
+  HUKUK               // Hukuk Fakültesi Dekanlığı
+  EGITIM              // Eğitim Fakültesi Dekanlığı
+  BILGI_ISLEM         // Bilgi İşlem Daire Başkanlığı
+  YAPI_ISLER          // Yapı İşleri ve Teknik Daire Başkanlığı
+  KÜTÜPHANE           // Kütüphane ve Dokümantasyon Daire Başkanlığı
+  SAGLIK_KULTUR       // Sağlık, Kültür ve Spor Daire Başkanlığı
+}
+
+enum PetitionStatus {
+  BEKLEMEDE     // Beklemede
+  INCELEMEDE    // İncelemede
+  CEVAPLANDI    // Cevaplandı
+  KAPATILDI     // Kapatıldı
+}
+
+model User {
+  id          Int       @id @default(autoincrement())
+  tcKimlik    String?   @unique @db.VarChar(11)   // TC Kimlik No (vatandaş + akademisyen + öğrenci)
+  ogrenciNo   String?   @unique @db.VarChar(20)   // Öğrenci numarası
+  sicilNo     String?   @unique @db.VarChar(20)   // Sicil numarası (akademik personel)
+  ad          String    @db.VarChar(100)
+  soyad       String    @db.VarChar(100)
+  email       String    @unique @db.VarChar(255)
+  password    String    @db.VarChar(255)
+  telefon     String?   @db.VarChar(20)
+  userType    UserType
+  bolum       String?   @db.VarChar(200)          // Bölüm / Fakülte
+  unvan       String?   @db.VarChar(100)          // Akademik unvan
+  isActive    Boolean   @default(true)
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  petitions   Petition[]
+
+  @@map("users")
+}
+
+model Petition {
+  id            Int               @id @default(autoincrement())
+  trackingCode  String            @unique @db.VarChar(20)  // Takip kodu
+  userId        Int?                                        // null ise misafir başvuru
+  user          User?             @relation(fields: [userId], references: [id])
+  
+  // Başvuru sahibi bilgileri (misafir için)
+  adSoyad       String?           @db.VarChar(200)
+  email         String?           @db.VarChar(255)
+  telefon       String?           @db.VarChar(20)
+  tcKimlik      String?           @db.VarChar(11)
+
+  category      PetitionCategory
+  targetUnit    TargetUnit
+  konu          String            @db.VarChar(500)
+  icerik        String            @db.Text
+  status        PetitionStatus    @default(BEKLEMEDE)
+  
+  adminNotu     String?           @db.Text           // Yönetici yanıtı
+  cevapTarihi   DateTime?
+  
+  createdAt     DateTime          @default(now())
+  updatedAt     DateTime          @updatedAt
+
+  @@map("petitions")
+}
