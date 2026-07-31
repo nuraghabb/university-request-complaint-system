@@ -112,8 +112,7 @@ export function PetitionList({ petitions }: PetitionListProps) {
       <div className="empty-state">
         <div className="empty-icon">📭</div>
         <h3>Henüz başvurunuz bulunmuyor</h3>
-        <p>Yeni bir başvuru oluşturmak için "Yeni Başvuru" butonunu kullanın.</p>
-      </div>
+<p>Yeni bir başvuru oluşturmak için &quot;Yeni Başvuru&quot; butonunu kullanın.</p>      </div>
     );
   }
 

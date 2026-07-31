@@ -1,128 +1,462 @@
-'use client';
+"use client";
 
-import { useState } from 'react';
+import { useState } from "react";
+
 import {
-  CATEGORY_LABELS,
   CATEGORY_ICONS,
+  CATEGORY_LABELS,
   TARGET_UNIT_LABELS,
-} from '@/lib/constants';
+} from "@/lib/constants";
 
-const CATEGORIES = Object.entries(CATEGORY_LABELS);
+import type {
+  ApiErrorResponse,
+  CreatePetitionFormData,
+  CreatePetitionRequest,
+  CreatePetitionSuccessResponse,
+  PetitionCategory,
+} from "@/types/petition";
+
+const CATEGORIES = Object.entries(CATEGORY_LABELS) as Array<
+  [PetitionCategory, string]
+>;
+
 const TARGET_UNITS = Object.entries(TARGET_UNIT_LABELS);
 
+const PRIVACY_NOTICE_VERSION = "2026-08-01";
+
+const initialForm: CreatePetitionFormData = {
+  firstName: "",
+  lastName: "",
+  tcKimlik: "",
+  birthYear: "",
+  email: "",
+  phone: "",
+  category: "",
+  targetUnitCode: "",
+  subject: "",
+  content: "",
+  privacyNoticeAcknowledged: false,
+};
+
 interface NewPetitionFormProps {
-  onSuccess: (petition: { trackingCode: string; konu: string }) => void;
+  onSuccess: (message: string) => void;
   onCancel: () => void;
-  // Guest mode: no logged-in user
-  guestMode?: boolean;
 }
 
-export default function NewPetitionForm({ onSuccess, onCancel, guestMode = false }: NewPetitionFormProps) {
-  const [form, setForm] = useState({
-    category: '',
-    targetUnit: '',
-    konu: '',
-    icerik: '',
-    // Guest fields
-    adSoyad: '',
-    email: '',
-    telefon: '',
-    tcKimlik: '',
-  });
-  const [error, setError] = useState('');
+export default function NewPetitionForm({
+  onSuccess,
+  onCancel,
+}: NewPetitionFormProps) {
+  const [form, setForm] =
+    useState<CreatePetitionFormData>(initialForm);
+
+  const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
 
-  function handleChange(e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) {
-    setForm((prev) => ({ ...prev, [e.target.name]: e.target.value }));
+  function handleChange(
+    event: React.ChangeEvent<
+      HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement
+    >
+  ) {
+    const target = event.target;
+    const { name, value } = target;
+
+    if (
+      target instanceof HTMLInputElement &&
+      target.type === "checkbox"
+    ) {
+      setForm((currentForm) => ({
+        ...currentForm,
+        [name]: target.checked,
+      }));
+
+      return;
+    }
+
+    let normalizedValue = value;
+
+    if (name === "tcKimlik") {
+      normalizedValue = value
+        .replace(/\D/g, "")
+        .slice(0, 11);
+    }
+
+    if (name === "birthYear") {
+      normalizedValue = value
+        .replace(/\D/g, "")
+        .slice(0, 4);
+    }
+
+    setForm((currentForm) => ({
+      ...currentForm,
+      [name]: normalizedValue,
+    }));
   }
 
-  async function handleSubmit(e: React.FormEvent) {
-    e.preventDefault();
-    setError('');
+  function validateForm(): string | null {
+    const currentYear = new Date().getFullYear();
+    const birthYear = Number(form.birthYear);
 
-    if (!form.category || !form.targetUnit || !form.konu.trim() || !form.icerik.trim()) {
-      setError('Lütfen tüm zorunlu alanları doldurun.');
+    if (form.firstName.trim().length < 2) {
+      return "Ad alanını eksiksiz doldurun.";
+    }
+
+    if (form.lastName.trim().length < 2) {
+      return "Soyad alanını eksiksiz doldurun.";
+    }
+
+    if (!/^\d{11}$/.test(form.tcKimlik)) {
+      return "T.C. kimlik numarası 11 rakamdan oluşmalıdır.";
+    }
+
+    if (
+      !Number.isInteger(birthYear) ||
+      birthYear < 1900 ||
+      birthYear > currentYear
+    ) {
+      return "Geçerli bir doğum yılı girin.";
+    }
+
+    if (
+      !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(
+        form.email.trim()
+      )
+    ) {
+      return "Geçerli bir e-posta adresi girin.";
+    }
+
+    if (!form.category) {
+      return "Başvuru kategorisini seçin.";
+    }
+
+    if (!form.targetUnitCode) {
+      return "Hedef birimi seçin.";
+    }
+
+    if (form.subject.trim().length < 5) {
+      return "Başvuru konusu en az 5 karakter olmalıdır.";
+    }
+
+    if (form.content.trim().length < 20) {
+      return "Başvuru içeriği en az 20 karakter olmalıdır.";
+    }
+
+    if (!form.privacyNoticeAcknowledged) {
+      return "Aydınlatma metnini okuduğunuzu onaylamalısınız.";
+    }
+
+    return null;
+  }
+
+  async function handleSubmit(
+    event: React.FormEvent<HTMLFormElement>
+  ) {
+    event.preventDefault();
+    setError("");
+
+    const validationError = validateForm();
+
+    if (validationError) {
+      setError(validationError);
       return;
     }
 
-    if (guestMode && !form.email.trim()) {
-      setError('Misafir başvurularda e-posta zorunludur.');
+    if (!form.category) {
       return;
     }
+
+    const requestBody: CreatePetitionRequest = {
+      identity: {
+        firstName: form.firstName.trim(),
+        lastName: form.lastName.trim(),
+        tcKimlik: form.tcKimlik,
+        birthYear: Number(form.birthYear),
+      },
+      email: form.email.trim().toLowerCase(),
+      phone: form.phone.trim() || undefined,
+      category: form.category,
+      targetUnitCode: form.targetUnitCode,
+      subject: form.subject.trim(),
+      content: form.content.trim(),
+
+      /*
+       * Gerçek Turnstile bileşeni bağlandığında bu değer,
+       * bileşenden alınan gerçek token ile değiştirilecek.
+       */
+      captchaToken: "development-mock-token",
+
+      privacyNoticeVersion: PRIVACY_NOTICE_VERSION,
+      privacyNoticeAcknowledged:
+        form.privacyNoticeAcknowledged,
+    };
 
     setLoading(true);
-    try {
-      const res = await fetch('/api/petitions', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(form),
-      });
-      const data = await res.json();
 
-      if (!res.ok) {
-        setError(data.error || 'Başvuru gönderilemedi.');
-      } else {
-        onSuccess({ trackingCode: data.petition.trackingCode, konu: data.petition.konu });
+    try {
+      const response = await fetch("/api/petitions", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(requestBody),
+      });
+
+      const data = (await response.json()) as
+        | CreatePetitionSuccessResponse
+        | ApiErrorResponse;
+
+      if (!response.ok || !data.success) {
+        const errorMessage =
+          "error" in data
+            ? data.error
+            : "Başvuru gönderilemedi.";
+
+        setError(errorMessage);
+        return;
       }
-    } catch {
-      setError('Sunucu hatası. Lütfen tekrar deneyin.');
+
+      onSuccess(data.message);
+    } catch (submitError) {
+      console.error(
+        "Başvuru gönderme isteği başarısız:",
+        submitError instanceof Error
+          ? submitError.message
+          : "Bilinmeyen hata"
+      );
+
+      setError(
+        "Sunucuya ulaşılamadı. Lütfen tekrar deneyin."
+      );
     } finally {
       setLoading(false);
     }
   }
 
   return (
-    <div className="modal-overlay" onClick={onCancel}>
-      <div className="modal" onClick={(e) => e.stopPropagation()} style={{ maxWidth: 720 }}>
+    <div
+      className="modal-overlay"
+      onClick={onCancel}
+    >
+      <div
+        className="modal"
+        onClick={(event) => event.stopPropagation()}
+        style={{ maxWidth: 760 }}
+      >
         <div className="modal-header">
-          <h2 className="modal-title">📝 Yeni Başvuru</h2>
-          <button className="modal-close" onClick={onCancel}>×</button>
+          <h2 className="modal-title">
+            📝 Yeni Başvuru
+          </h2>
+
+          <button
+            type="button"
+            className="modal-close"
+            onClick={onCancel}
+            aria-label="Başvuru formunu kapat"
+            disabled={loading}
+          >
+            ×
+          </button>
         </div>
+
         <div className="modal-body">
-          <form onSubmit={handleSubmit}>
+          <form onSubmit={handleSubmit} noValidate>
             {error && (
-              <div className="alert alert-error" style={{ marginBottom: 16 }}>
+              <div
+                className="alert alert-error"
+                role="alert"
+                style={{ marginBottom: 16 }}
+              >
                 ⚠️ {error}
               </div>
             )}
 
-            {/* Guest mode fields */}
-            {guestMode && (
-              <>
-                <div style={{ background: 'var(--info-bg)', border: '1px solid #90cdf4', borderRadius: 'var(--radius)', padding: '12px 16px', marginBottom: 20, fontSize: 13, color: 'var(--info)' }}>
-                  ℹ️ Misafir olarak başvuru yapıyorsunuz. Yanıtları takip etmek için geçerli bir e-posta adresi girin.
-                </div>
-                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
-                  <div className="form-group">
-                    <label className="form-label">Ad Soyad <span className="required">*</span></label>
-                    <input name="adSoyad" className="form-control" placeholder="Ad Soyad" value={form.adSoyad} onChange={handleChange} required={guestMode} />
-                  </div>
-                  <div className="form-group">
-                    <label className="form-label">TC Kimlik No</label>
-                    <input name="tcKimlik" className="form-control" placeholder="11 haneli TC No" value={form.tcKimlik} onChange={handleChange} maxLength={11} />
-                  </div>
-                  <div className="form-group">
-                    <label className="form-label">E-posta <span className="required">*</span></label>
-                    <input name="email" type="email" className="form-control" placeholder="ornek@email.com" value={form.email} onChange={handleChange} required={guestMode} />
-                  </div>
-                  <div className="form-group">
-                    <label className="form-label">Telefon</label>
-                    <input name="telefon" className="form-control" placeholder="05XX XXX XX XX" value={form.telefon} onChange={handleChange} />
-                  </div>
-                </div>
-                <div className="divider" />
-              </>
-            )}
+            <div
+              style={{
+                background: "var(--info-bg)",
+                border: "1px solid #90cdf4",
+                borderRadius: "var(--radius)",
+                padding: "12px 16px",
+                marginBottom: 20,
+                color: "var(--info)",
+                fontSize: 13,
+                lineHeight: 1.6,
+              }}
+            >
+              ℹ️ Kimlik bilgileriniz yalnızca gerçek kişi
+              doğrulaması amacıyla kullanılacak; T.C. kimlik
+              numaranız ve doğum yılınız sisteme
+              kaydedilmeyecektir.
+            </div>
 
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
+            <div
+              style={{
+                display: "grid",
+                gridTemplateColumns:
+                  "repeat(auto-fit, minmax(220px, 1fr))",
+                gap: 12,
+              }}
+            >
               <div className="form-group">
-                <label className="form-label" htmlFor="category">
+                <label
+                  className="form-label"
+                  htmlFor="firstName"
+                >
+                  Ad <span className="required">*</span>
+                </label>
+
+                <input
+                  id="firstName"
+                  name="firstName"
+                  className="form-control"
+                  value={form.firstName}
+                  onChange={handleChange}
+                  autoComplete="given-name"
+                  disabled={loading}
+                />
+              </div>
+
+              <div className="form-group">
+                <label
+                  className="form-label"
+                  htmlFor="lastName"
+                >
+                  Soyad <span className="required">*</span>
+                </label>
+
+                <input
+                  id="lastName"
+                  name="lastName"
+                  className="form-control"
+                  value={form.lastName}
+                  onChange={handleChange}
+                  autoComplete="family-name"
+                  disabled={loading}
+                />
+              </div>
+
+              <div className="form-group">
+                <label
+                  className="form-label"
+                  htmlFor="tcKimlik"
+                >
+                  T.C. Kimlik Numarası{" "}
+                  <span className="required">*</span>
+                </label>
+
+                <input
+                  id="tcKimlik"
+                  name="tcKimlik"
+                  className="form-control"
+                  value={form.tcKimlik}
+                  onChange={handleChange}
+                  placeholder="11 haneli T.C. kimlik numarası"
+                  inputMode="numeric"
+                  autoComplete="off"
+                  maxLength={11}
+                  disabled={loading}
+                />
+              </div>
+
+              <div className="form-group">
+                <label
+                  className="form-label"
+                  htmlFor="birthYear"
+                >
+                  Doğum Yılı{" "}
+                  <span className="required">*</span>
+                </label>
+
+                <input
+                  id="birthYear"
+                  name="birthYear"
+                  className="form-control"
+                  value={form.birthYear}
+                  onChange={handleChange}
+                  placeholder="Örn. 2000"
+                  inputMode="numeric"
+                  autoComplete="bday-year"
+                  maxLength={4}
+                  disabled={loading}
+                />
+              </div>
+
+              <div className="form-group">
+                <label
+                  className="form-label"
+                  htmlFor="email"
+                >
+                  E-posta <span className="required">*</span>
+                </label>
+
+                <input
+                  id="email"
+                  name="email"
+                  type="email"
+                  className="form-control"
+                  value={form.email}
+                  onChange={handleChange}
+                  placeholder="ornek@email.com"
+                  autoComplete="email"
+                  disabled={loading}
+                />
+              </div>
+
+              <div className="form-group">
+                <label
+                  className="form-label"
+                  htmlFor="phone"
+                >
+                  Telefon
+                </label>
+
+                <input
+                  id="phone"
+                  name="phone"
+                  type="tel"
+                  className="form-control"
+                  value={form.phone}
+                  onChange={handleChange}
+                  placeholder="05XX XXX XX XX"
+                  autoComplete="tel"
+                  maxLength={20}
+                  disabled={loading}
+                />
+              </div>
+            </div>
+
+            <div className="divider" />
+
+            <div
+              style={{
+                display: "grid",
+                gridTemplateColumns:
+                  "repeat(auto-fit, minmax(220px, 1fr))",
+                gap: 12,
+              }}
+            >
+              <div className="form-group">
+                <label
+                  className="form-label"
+                  htmlFor="category"
+                >
                   Kategori <span className="required">*</span>
                 </label>
-                <select id="category" name="category" className="form-control" value={form.category} onChange={handleChange} required>
+
+                <select
+                  id="category"
+                  name="category"
+                  className="form-control"
+                  value={form.category}
+                  onChange={handleChange}
+                  disabled={loading}
+                >
                   <option value="">Seçiniz...</option>
+
                   {CATEGORIES.map(([value, label]) => (
-                    <option key={value} value={value}>
+                    <option
+                      key={value}
+                      value={value}
+                    >
                       {CATEGORY_ICONS[value]} {label}
                     </option>
                   ))}
@@ -130,56 +464,143 @@ export default function NewPetitionForm({ onSuccess, onCancel, guestMode = false
               </div>
 
               <div className="form-group">
-                <label className="form-label" htmlFor="targetUnit">
-                  Hedef Birim <span className="required">*</span>
+                <label
+                  className="form-label"
+                  htmlFor="targetUnitCode"
+                >
+                  Hedef Birim{" "}
+                  <span className="required">*</span>
                 </label>
-                <select id="targetUnit" name="targetUnit" className="form-control" value={form.targetUnit} onChange={handleChange} required>
+
+                <select
+                  id="targetUnitCode"
+                  name="targetUnitCode"
+                  className="form-control"
+                  value={form.targetUnitCode}
+                  onChange={handleChange}
+                  disabled={loading}
+                >
                   <option value="">Seçiniz...</option>
-                  {TARGET_UNITS.map(([value, label]) => (
-                    <option key={value} value={value}>{label}</option>
+
+                  {TARGET_UNITS.map(([code, name]) => (
+                    <option
+                      key={code}
+                      value={code}
+                    >
+                      {name}
+                    </option>
                   ))}
                 </select>
               </div>
             </div>
 
             <div className="form-group">
-              <label className="form-label" htmlFor="konu">
+              <label
+                className="form-label"
+                htmlFor="subject"
+              >
                 Konu <span className="required">*</span>
               </label>
+
               <input
-                id="konu"
-                name="konu"
+                id="subject"
+                name="subject"
                 className="form-control"
-                placeholder="Başvurunuzun konusunu kısaca belirtin"
-                value={form.konu}
+                value={form.subject}
                 onChange={handleChange}
+                placeholder="Başvurunuzun konusunu kısaca belirtin"
                 maxLength={500}
-                required
+                disabled={loading}
               />
             </div>
 
             <div className="form-group">
-              <label className="form-label" htmlFor="icerik">
+              <label
+                className="form-label"
+                htmlFor="content"
+              >
                 İçerik <span className="required">*</span>
               </label>
+
               <textarea
-                id="icerik"
-                name="icerik"
+                id="content"
+                name="content"
                 className="form-control"
-                placeholder="Başvurunuzun detaylarını açıklayın..."
-                value={form.icerik}
+                value={form.content}
                 onChange={handleChange}
+                placeholder="Başvurunuzun detaylarını açıklayın..."
                 rows={6}
-                required
+                disabled={loading}
               />
             </div>
 
-            <div style={{ display: 'flex', gap: 12, justifyContent: 'flex-end' }}>
-              <button type="button" className="btn btn-ghost" onClick={onCancel}>
+            <div
+              style={{
+                display: "flex",
+                alignItems: "flex-start",
+                gap: 10,
+                marginBottom: 22,
+              }}
+            >
+              <input
+                id="privacyNoticeAcknowledged"
+                name="privacyNoticeAcknowledged"
+                type="checkbox"
+                checked={form.privacyNoticeAcknowledged}
+                onChange={handleChange}
+                disabled={loading}
+                style={{
+                  width: 17,
+                  height: 17,
+                  marginTop: 3,
+                  cursor: "pointer",
+                }}
+              />
+
+              <label
+                htmlFor="privacyNoticeAcknowledged"
+                style={{
+                  color: "var(--text-secondary)",
+                  fontSize: 13,
+                  lineHeight: 1.5,
+                  cursor: "pointer",
+                }}
+              >
+                Kişisel Verilerin İşlenmesine İlişkin
+                Aydınlatma Metni&apos;ni okudum.{" "}
+                <span className="required">*</span>
+              </label>
+            </div>
+
+            <div
+              style={{
+                display: "flex",
+                justifyContent: "flex-end",
+                flexWrap: "wrap",
+                gap: 12,
+              }}
+            >
+              <button
+                type="button"
+                className="btn btn-ghost"
+                onClick={onCancel}
+                disabled={loading}
+              >
                 İptal
               </button>
-              <button type="submit" className="btn btn-primary" disabled={loading}>
-                {loading ? <><span className="spinner" /> Gönderiliyor...</> : '📤 Başvuruyu Gönder'}
+
+              <button
+                type="submit"
+                className="btn btn-primary"
+                disabled={loading}
+              >
+                {loading ? (
+                  <>
+                    <span className="spinner" /> Gönderiliyor...
+                  </>
+                ) : (
+                  "📤 Başvuruyu Gönder"
+                )}
               </button>
             </div>
           </form>

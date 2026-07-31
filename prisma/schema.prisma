@@ -6,88 +6,347 @@ datasource db {
   provider = "postgresql"
 }
 
-enum UserType {
-  ACADEMIC   // İç / Akademik
-  STUDENT    // İç / Öğrenci
-  CITIZEN    // Dış / Vatandaş
+enum StaffRole {
+  ADMIN
+  UNIT_MANAGER
+  UNIT_STAFF
 }
 
 enum PetitionCategory {
-  TALEP          // Talep
-  SIKAYET        // Şikayet
-  BILGI_EDINME   // Bilgi Edinme
-  TESEKKUR       // Teşekkür
-  ONERI          // Öneri
-}
-
-enum TargetUnit {
-  REKTORLUK           // Rektörlük
-  OGRENCI_ISLERI      // Öğrenci İşleri
-  FEN_BILIMLERI       // Fen Bilimleri Fakültesi Dekanlığı
-  EDEBIYAT            // Edebiyat Fakültesi Dekanlığı
-  MUHENDISLIK         // Mühendislik Fakültesi Dekanlığı
-  IKTISAT             // İktisadi ve İdari Bilimler Fakültesi Dekanlığı
-  TIP                 // Tıp Fakültesi Dekanlığı
-  HUKUK               // Hukuk Fakültesi Dekanlığı
-  EGITIM              // Eğitim Fakültesi Dekanlığı
-  BILGI_ISLEM         // Bilgi İşlem Daire Başkanlığı
-  YAPI_ISLER          // Yapı İşleri ve Teknik Daire Başkanlığı
-  KÜTÜPHANE           // Kütüphane ve Dokümantasyon Daire Başkanlığı
-  SAGLIK_KULTUR       // Sağlık, Kültür ve Spor Daire Başkanlığı
+  TALEP
+  SIKAYET
+  BILGI_EDINME
+  TESEKKUR
+  ONERI
 }
 
 enum PetitionStatus {
-  BEKLEMEDE     // Beklemede
-  INCELEMEDE    // İncelemede
-  CEVAPLANDI    // Cevaplandı
-  KAPATILDI     // Kapatıldı
+  EMAIL_PENDING
+  RECEIVED
+  ASSIGNED
+  IN_REVIEW
+  FORWARDED
+  ANSWERED
+  CLOSED
+  REJECTED
 }
 
-model User {
-  id          Int       @id @default(autoincrement())
-  tcKimlik    String?   @unique @db.VarChar(11)   // TC Kimlik No (vatandaş + akademisyen + öğrenci)
-  ogrenciNo   String?   @unique @db.VarChar(20)   // Öğrenci numarası
-  sicilNo     String?   @unique @db.VarChar(20)   // Sicil numarası (akademik personel)
-  ad          String    @db.VarChar(100)
-  soyad       String    @db.VarChar(100)
-  email       String    @unique @db.VarChar(255)
-  password    String    @db.VarChar(255)
-  telefon     String?   @db.VarChar(20)
-  userType    UserType
-  bolum       String?   @db.VarChar(200)          // Bölüm / Fakülte
-  unvan       String?   @db.VarChar(100)          // Akademik unvan
+enum PetitionPriority {
+  LOW
+  NORMAL
+  HIGH
+  URGENT
+}
+
+enum ResponseVisibility {
+  INTERNAL
+  APPLICANT
+}
+
+enum NotificationType {
+  EMAIL_VERIFICATION
+  PETITION_RECEIVED
+  PETITION_ASSIGNED
+  PETITION_FORWARDED
+  PETITION_ANSWERED
+  PETITION_CLOSED
+  PETITION_REJECTED
+}
+
+enum NotificationStatus {
+  PENDING
+  PROCESSING
+  SENT
+  FAILED
+}
+
+enum AuditActorType {
+  APPLICANT
+  STAFF
+  SYSTEM
+}
+
+enum AuditAction {
+  CREATE
+  READ
+  UPDATE
+  DELETE
+  LOGIN
+  LOGIN_FAILED
+  LOGOUT
+  VERIFY
+  ASSIGN
+  FORWARD
+  RESPOND
+  STATUS_CHANGE
+  CLOSE
+  NOTIFY
+}
+
+model StaffUser {
+  id           Int       @id @default(autoincrement())
+  firstName    String    @db.VarChar(100)
+  lastName     String    @db.VarChar(100)
+  email        String    @unique @db.VarChar(255)
+  passwordHash String    @db.VarChar(255)
+  role         StaffRole @default(UNIT_STAFF)
+
+  unitId Int?
+  unit   Unit? @relation(fields: [unitId], references: [id], onDelete: SetNull)
+
   isActive    Boolean   @default(true)
+  lastLoginAt DateTime?
   createdAt   DateTime  @default(now())
   updatedAt   DateTime  @updatedAt
 
-  petitions   Petition[]
+  assignedPetitions   Petition[]              @relation("CurrentAssignee")
+  assignmentsReceived PetitionAssignment[]    @relation("AssignmentReceiver")
+  assignmentsCreated  PetitionAssignment[]    @relation("AssignmentCreator")
+  responses           PetitionResponse[]
+  statusChanges       PetitionStatusHistory[]
+  auditLogs           AuditLog[]              @relation("AuditStaffActor")
 
-  @@map("users")
+  @@index([unitId])
+  @@index([role, isActive])
+  @@map("staff_users")
+}
+
+model Unit {
+  id          Int      @id @default(autoincrement())
+  code        String   @unique @db.VarChar(50)
+  name        String   @db.VarChar(200)
+  email       String?  @db.VarChar(255)
+  description String?  @db.Text
+  isActive    Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  staff           StaffUser[]
+  petitions       Petition[]
+  assignmentsFrom PetitionAssignment[] @relation("AssignmentFromUnit")
+  assignmentsTo   PetitionAssignment[] @relation("AssignmentToUnit")
+
+  @@index([isActive])
+  @@map("units")
 }
 
 model Petition {
-  id            Int               @id @default(autoincrement())
-  trackingCode  String            @unique @db.VarChar(20)  // Takip kodu
-  userId        Int?                                        // null ise misafir başvuru
-  user          User?             @relation(fields: [userId], references: [id])
-  
-  // Başvuru sahibi bilgileri (misafir için)
-  adSoyad       String?           @db.VarChar(200)
-  email         String?           @db.VarChar(255)
-  telefon       String?           @db.VarChar(20)
-  tcKimlik      String?           @db.VarChar(11)
+  id           Int    @id @default(autoincrement())
+  trackingCode String @unique @db.VarChar(24)
 
-  category      PetitionCategory
-  targetUnit    TargetUnit
-  konu          String            @db.VarChar(500)
-  icerik        String            @db.Text
-  status        PetitionStatus    @default(BEKLEMEDE)
-  
-  adminNotu     String?           @db.Text           // Yönetici yanıtı
-  cevapTarihi   DateTime?
-  
-  createdAt     DateTime          @default(now())
-  updatedAt     DateTime          @updatedAt
+  applicantFirstName String  @db.VarChar(100)
+  applicantLastName  String  @db.VarChar(100)
+  applicantEmail     String  @db.VarChar(255)
+  applicantPhone     String? @db.VarChar(20)
 
+  // T.C. kimlik numarası ve doğum yılı veritabanında tutulmaz.
+  identityVerifiedAt DateTime
+
+  // Yalnızca doğrulama servisinin kişisel veri içermeyen
+  // teknik referans numarası varsa kaydedilir.
+  identityVerificationReference String? @db.VarChar(120)
+
+  // CAPTCHA tokenı kaydedilmez.
+  botCheckVerifiedAt DateTime
+
+  privacyNoticeVersion        String   @db.VarChar(30)
+  privacyNoticeAcknowledgedAt DateTime
+
+  emailVerifiedAt DateTime?
+
+  category PetitionCategory
+
+  targetUnitId Int
+  targetUnit   Unit @relation(fields: [targetUnitId], references: [id], onDelete: Restrict)
+
+  assignedStaffId Int?
+  assignedStaff   StaffUser? @relation("CurrentAssignee", fields: [assignedStaffId], references: [id], onDelete: SetNull)
+
+  subject  String           @db.VarChar(500)
+  content  String           @db.Text
+  status   PetitionStatus   @default(EMAIL_PENDING)
+  priority PetitionPriority @default(NORMAL)
+
+  dueAt     DateTime?
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+
+  attachments        PetitionAttachment[]
+  verificationTokens EmailVerificationToken[]
+  assignments        PetitionAssignment[]
+  responses          PetitionResponse[]
+  statusHistory      PetitionStatusHistory[]
+  notifications      NotificationOutbox[]
+
+  @@index([targetUnitId, status])
+  @@index([assignedStaffId, status])
+  @@index([applicantEmail])
+  @@index([emailVerifiedAt])
+  @@index([createdAt])
   @@map("petitions")
+}
+
+model PetitionAttachment {
+  id         Int      @id @default(autoincrement())
+  petitionId Int
+  petition   Petition @relation(fields: [petitionId], references: [id], onDelete: Cascade)
+
+  originalName String   @db.VarChar(255)
+  storageKey   String   @unique @db.VarChar(500)
+  mimeType     String   @db.VarChar(150)
+  sizeBytes    Int
+  createdAt    DateTime @default(now())
+
+  @@index([petitionId])
+  @@map("petition_attachments")
+}
+
+model EmailVerificationToken {
+  id         Int      @id @default(autoincrement())
+  petitionId Int
+  petition   Petition @relation(fields: [petitionId], references: [id], onDelete: Cascade)
+
+  // Tokenın açık hâli değil, SHA-256 özeti tutulacak.
+  tokenHash String @unique @db.VarChar(64)
+
+  expiresAt DateTime
+  usedAt    DateTime?
+  createdAt DateTime  @default(now())
+
+  @@index([petitionId])
+  @@index([expiresAt])
+  @@map("email_verification_tokens")
+}
+
+model PetitionAssignment {
+  id         Int      @id @default(autoincrement())
+  petitionId Int
+  petition   Petition @relation(fields: [petitionId], references: [id], onDelete: Cascade)
+
+  // İlk atamada boş olabilir.
+  fromUnitId Int?
+  fromUnit   Unit? @relation("AssignmentFromUnit", fields: [fromUnitId], references: [id], onDelete: SetNull)
+
+  toUnitId Int
+  toUnit   Unit @relation("AssignmentToUnit", fields: [toUnitId], references: [id], onDelete: Restrict)
+
+  assignedToId Int?
+  assignedTo   StaffUser? @relation("AssignmentReceiver", fields: [assignedToId], references: [id], onDelete: SetNull)
+
+  assignedById Int?
+  assignedBy   StaffUser? @relation("AssignmentCreator", fields: [assignedById], references: [id], onDelete: SetNull)
+
+  note      String?   @db.Text
+  createdAt DateTime  @default(now())
+  endedAt   DateTime?
+
+  @@index([petitionId, createdAt])
+  @@index([fromUnitId])
+  @@index([toUnitId])
+  @@index([assignedToId])
+  @@index([assignedById])
+  @@map("petition_assignments")
+}
+
+model PetitionResponse {
+  id         Int      @id @default(autoincrement())
+  petitionId Int
+  petition   Petition @relation(fields: [petitionId], references: [id], onDelete: Cascade)
+
+  authorId Int
+  author   StaffUser @relation(fields: [authorId], references: [id], onDelete: Restrict)
+
+  content String @db.Text
+
+  // INTERNAL: yalnızca kurum personeli görür.
+  // APPLICANT: başvuru sahibi takip ekranında görebilir.
+  visibility ResponseVisibility @default(INTERNAL)
+
+  isFinal   Boolean  @default(false)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([petitionId, createdAt])
+  @@index([authorId])
+  @@index([visibility])
+  @@map("petition_responses")
+}
+
+model PetitionStatusHistory {
+  id         Int      @id @default(autoincrement())
+  petitionId Int
+  petition   Petition @relation(fields: [petitionId], references: [id], onDelete: Cascade)
+
+  fromStatus PetitionStatus?
+  toStatus   PetitionStatus
+
+  changedById Int?
+  changedBy   StaffUser? @relation(fields: [changedById], references: [id], onDelete: SetNull)
+
+  note      String?  @db.Text
+  createdAt DateTime @default(now())
+
+  @@index([petitionId, createdAt])
+  @@index([changedById])
+  @@map("petition_status_history")
+}
+
+model NotificationOutbox {
+  id Int @id @default(autoincrement())
+
+  petitionId Int?
+  petition   Petition? @relation(fields: [petitionId], references: [id], onDelete: SetNull)
+
+  type           NotificationType
+  recipientEmail String             @db.VarChar(255)
+  subject        String             @db.VarChar(500)
+  payload        Json
+  status         NotificationStatus @default(PENDING)
+
+  deduplicationKey String? @unique @db.VarChar(150)
+
+  attemptCount Int       @default(0)
+  lastError    String?   @db.Text
+  availableAt  DateTime  @default(now())
+  sentAt       DateTime?
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
+
+  @@index([status, availableAt])
+  @@index([petitionId])
+  @@map("notification_outbox")
+}
+
+model AuditLog {
+  id Int @id @default(autoincrement())
+
+  actorType AuditActorType
+
+  // Yalnızca işlemi yapan kişi kurum personeliyse doldurulur.
+  staffActorId Int?
+  staffActor   StaffUser? @relation("AuditStaffActor", fields: [staffActorId], references: [id], onDelete: SetNull)
+
+  action     AuditAction
+  entityType String      @db.VarChar(100)
+  entityId   String?     @db.VarChar(100)
+
+  // Şifre, T.C. kimlik numarası, CAPTCHA veya doğrulama
+  // tokenı bu alanlara kesinlikle yazılmayacak.
+  oldValues Json?
+  newValues Json?
+  metadata  Json?
+
+  requestId    String?  @db.VarChar(100)
+  ipAddress    String?  @db.VarChar(64)
+  userAgent    String?  @db.Text
+  success      Boolean  @default(true)
+  errorMessage String?  @db.Text
+  createdAt    DateTime @default(now())
+
+  @@index([staffActorId, createdAt])
+  @@index([entityType, entityId])
+  @@index([action, createdAt])
+  @@index([requestId])
+  @@index([createdAt])
+  @@map("audit_logs")
 }
