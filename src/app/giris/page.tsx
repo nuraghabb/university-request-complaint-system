@@ -1,44 +1,87 @@
-'use client';
+"use client";
 
-import { useState, useEffect } from 'react';
-import { useRouter } from 'next/navigation';
+import Link from "next/link";
+import { useState } from "react";
+import { useRouter } from "next/navigation";
+
+type StaffRole = "ADMIN" | "UNIT_MANAGER" | "UNIT_STAFF";
+
+interface LoginSuccessResponse {
+  success: true;
+  user: {
+    id: number;
+    firstName: string;
+    lastName: string;
+    email: string;
+    role: StaffRole;
+    unit: {
+      id: number;
+      code: string;
+      name: string;
+    } | null;
+  };
+}
+
+interface LoginErrorResponse {
+  success: false;
+  error: string;
+}
 
 export default function LoginPage() {
   const router = useRouter();
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
-  const [error, setError] = useState('');
+
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
 
-  useEffect(() => {
-    fetch('/api/auth/me')
-      .then((r) => r.json())
-      .then((data) => {
-        if (data.user) redirectByType(data.user.userType, router);
-      })
-      .catch(() => {});
-  }, [router]);
+  async function handleSubmit(
+    event: React.FormEvent<HTMLFormElement>
+  ) {
+    event.preventDefault();
 
-  async function handleSubmit(e: React.FormEvent) {
-    e.preventDefault();
-    setError('');
+    setError("");
+
+    const normalizedEmail = email.trim().toLowerCase();
+
+    if (!normalizedEmail || !password) {
+      setError("E-posta ve şifre alanlarını doldurun.");
+      return;
+    }
+
     setLoading(true);
 
     try {
-      const res = await fetch('/api/auth/login', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email, password }),
+      const response = await fetch("/api/auth/login", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          email: normalizedEmail,
+          password,
+        }),
       });
-      const data = await res.json();
 
-      if (!res.ok) {
-        setError(data.error || 'Giriş yapılamadı.');
-      } else {
-        redirectByType(data.user.userType, router);
+      const data = (await response.json()) as
+        | LoginSuccessResponse
+        | LoginErrorResponse;
+
+      if (!response.ok || !data.success) {
+        const errorMessage =
+          "error" in data
+            ? data.error
+            : "Giriş yapılamadı.";
+
+        setError(errorMessage);
+        return;
       }
+
+      redirectByRole(data.user.role, router);
     } catch {
-      setError('Sunucuya bağlanılamadı. Lütfen tekrar deneyin.');
+      setError(
+        "Sunucuya bağlanılamadı. Lütfen tekrar deneyin."
+      );
     } finally {
       setLoading(false);
     }
@@ -49,48 +92,88 @@ export default function LoginPage() {
       <div className="login-card">
         <div className="login-header">
           <div className="login-logo">🏛️</div>
+
           <h1>Mersin Üniversitesi</h1>
-          <p>Dilek & Öneri Yönetim Sistemi</p>
+
+          <p>Dilek ve Öneri Yönetim Sistemi</p>
         </div>
 
         <div className="login-body">
+          <div
+            style={{
+              marginBottom: 22,
+              padding: "12px 16px",
+              borderRadius: "var(--radius)",
+              border: "1px solid var(--border)",
+              background: "var(--surface-2)",
+              color: "var(--text-secondary)",
+              fontSize: 13,
+              lineHeight: 1.6,
+            }}
+          >
+            Bu giriş ekranı yalnızca yetkili kurum personeli
+            içindir.
+          </div>
+
           <form onSubmit={handleSubmit}>
             {error && (
-              <div className="alert alert-error" style={{ marginBottom: 16 }}>
+              <div
+                className="alert alert-error"
+                role="alert"
+                style={{ marginBottom: 16 }}
+              >
                 <span>⚠️</span>
                 <span>{error}</span>
               </div>
             )}
 
             <div className="form-group">
-              <label className="form-label" htmlFor="email">
-                E-posta Adresi <span className="required">*</span>
+              <label
+                className="form-label"
+                htmlFor="email"
+              >
+                Kurumsal E-posta Adresi{" "}
+                <span className="required">*</span>
               </label>
+
               <input
                 id="email"
+                name="email"
                 type="email"
                 className="form-control"
                 placeholder="ornek@mersin.edu.tr"
                 value={email}
-                onChange={(e) => setEmail(e.target.value)}
+                onChange={(event) =>
+                  setEmail(event.target.value)
+                }
                 required
                 autoComplete="email"
+                disabled={loading}
               />
             </div>
 
             <div className="form-group">
-              <label className="form-label" htmlFor="password">
-                Şifre <span className="required">*</span>
+              <label
+                className="form-label"
+                htmlFor="password"
+              >
+                Şifre{" "}
+                <span className="required">*</span>
               </label>
+
               <input
                 id="password"
+                name="password"
                 type="password"
                 className="form-control"
                 placeholder="••••••••"
                 value={password}
-                onChange={(e) => setPassword(e.target.value)}
+                onChange={(event) =>
+                  setPassword(event.target.value)
+                }
                 required
                 autoComplete="current-password"
+                disabled={loading}
               />
             </div>
 
@@ -100,67 +183,67 @@ export default function LoginPage() {
               disabled={loading}
               style={{ marginTop: 8 }}
             >
-              {loading ? <><span className="spinner" /> Giriş Yapılıyor...</> : '🔐 Giriş Yap'}
+              {loading ? (
+                <>
+                  <span className="spinner" />{" "}
+                  Giriş Yapılıyor...
+                </>
+              ) : (
+                "🔐 Personel Girişi"
+              )}
             </button>
           </form>
 
-          <div className="login-divider"><span>TEST HESAPLARI</span></div>
+          <div
+            style={{
+              marginTop: 24,
+              paddingTop: 20,
+              borderTop: "1px solid var(--border)",
+              textAlign: "center",
+            }}
+          >
+            <p
+              style={{
+                marginBottom: 10,
+                color: "var(--text-muted)",
+                fontSize: 13,
+                lineHeight: 1.6,
+              }}
+            >
+              Başvuru oluşturmak için personel hesabına
+              ihtiyacınız yoktur.
+            </p>
 
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-            <TestAccountButton
-              label="🎓 Akademik Personel"
-              email="ahmet.yilmaz@mersin.edu.tr"
-              pass="akademik123"
-              onFill={(e, p) => { setEmail(e); setPassword(p); }}
-            />
-            <TestAccountButton
-              label="📚 Öğrenci"
-              email="mehmet.demir@std.mersin.edu.tr"
-              pass="ogrenci123"
-              onFill={(e, p) => { setEmail(e); setPassword(p); }}
-            />
-            <TestAccountButton
-              label="👤 Vatandaş"
-              email="fatma.ozturk@gmail.com"
-              pass="vatandas123"
-              onFill={(e, p) => { setEmail(e); setPassword(p); }}
-            />
+            <Link
+              href="/basvuru-misafir"
+              style={{
+                color: "var(--primary)",
+                fontWeight: 600,
+                fontSize: 14,
+                textDecoration: "none",
+              }}
+            >
+              Başvuru sayfasına git →
+            </Link>
           </div>
-
-          <p style={{ textAlign: 'center', marginTop: 20, fontSize: 12, color: 'var(--text-muted)' }}>
-            Hesabınız yoksa{' '}
-            <a href="/basvuru-misafir" style={{ color: 'var(--primary)', fontWeight: 600 }}>
-              misafir olarak başvuru yapabilirsiniz
-            </a>
-          </p>
         </div>
       </div>
     </div>
   );
 }
 
-function TestAccountButton({
-  label, email, pass, onFill,
-}: {
-  label: string;
-  email: string;
-  pass: string;
-  onFill: (e: string, p: string) => void;
-}) {
-  return (
-    <button
-      type="button"
-      className="btn btn-ghost btn-sm"
-      style={{ justifyContent: 'flex-start', fontSize: 12 }}
-      onClick={() => onFill(email, pass)}
-    >
-      {label} — <span style={{ opacity: .6, marginLeft: 4 }}>{email}</span>
-    </button>
-  );
-}
+function redirectByRole(
+  role: StaffRole,
+  router: ReturnType<typeof useRouter>
+) {
+  switch (role) {
+    case "ADMIN":
+    case "UNIT_MANAGER":
+    case "UNIT_STAFF":
+      router.replace("/dashboard/personel");
+      break;
 
-function redirectByType(userType: string, router: ReturnType<typeof useRouter>) {
-  if (userType === 'ACADEMIC') router.replace('/dashboard/akademik');
-  else if (userType === 'STUDENT') router.replace('/dashboard/ogrenci');
-  else router.replace('/dashboard/vatandas');
+    default:
+      router.replace("/giris");
+  }
 }

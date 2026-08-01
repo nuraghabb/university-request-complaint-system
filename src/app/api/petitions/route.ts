@@ -7,6 +7,7 @@ import { verifyCaptcha } from "@/services/captcha-verification";
 import { deliverEmail } from "@/services/email-delivery";
 import { createEmailVerificationToken } from "@/services/email-verification-token";
 import { verifyIdentity } from "@/services/identity-verification";
+
 import type {
   ApiErrorResponse,
   CreatePetitionRequest,
@@ -57,7 +58,7 @@ function isCreatePetitionRequest(
     (value.phone === undefined ||
       typeof value.phone === "string") &&
     typeof value.category === "string" &&
-   typeof value.targetUnitCode === "string" &&
+    typeof value.targetUnitCode === "string" &&
     typeof value.subject === "string" &&
     typeof value.content === "string" &&
     typeof value.captchaToken === "string" &&
@@ -86,7 +87,8 @@ async function createUniqueTrackingCode(): Promise<string> {
 }
 
 /**
- * Yetkili kurum personeli için başvuru listesini getirir.
+ * Yetkili kurum personeli için e-postası doğrulanmış
+ * başvuruların listesini getirir.
  */
 export async function GET(request: NextRequest) {
   const token = request.cookies.get("auth_token")?.value;
@@ -139,9 +141,22 @@ export async function GET(request: NextRequest) {
     const petitions = await prisma.petition.findMany({
       where:
         staffUser.role === "ADMIN"
-          ? undefined
+          ? {
+              emailVerifiedAt: {
+                not: null,
+              },
+              status: {
+                not: "EMAIL_PENDING",
+              },
+            }
           : {
               targetUnitId: staffUser.unitId ?? -1,
+              emailVerifiedAt: {
+                not: null,
+              },
+              status: {
+                not: "EMAIL_PENDING",
+              },
             },
       select: {
         id: true,
@@ -182,7 +197,9 @@ export async function GET(request: NextRequest) {
   } catch (error) {
     console.error(
       "Başvuru listesi alınamadı:",
-      error instanceof Error ? error.message : "Bilinmeyen hata"
+      error instanceof Error
+        ? error.message
+        : "Bilinmeyen hata"
     );
 
     return NextResponse.json(
@@ -199,7 +216,8 @@ export async function GET(request: NextRequest) {
  * Kullanıcı hesabı oluşturmadan yeni başvuru başlatır.
  */
 export async function POST(request: NextRequest) {
-  const requestInformation = getRequestInformation(request);
+  const requestInformation =
+    getRequestInformation(request);
 
   try {
     const body: unknown = await request.json();
@@ -210,7 +228,9 @@ export async function POST(request: NextRequest) {
         error: "Başvuru bilgileri eksik veya geçersiz.",
       };
 
-      return NextResponse.json(response, { status: 400 });
+      return NextResponse.json(response, {
+        status: 400,
+      });
     }
 
     const firstName = body.identity.firstName.trim();
@@ -232,10 +252,13 @@ export async function POST(request: NextRequest) {
     ) {
       const response: ApiErrorResponse = {
         success: false,
-        error: "Zorunlu başvuru alanlarını eksiksiz doldurun.",
+        error:
+          "Zorunlu başvuru alanlarını eksiksiz doldurun.",
       };
 
-      return NextResponse.json(response, { status: 400 });
+      return NextResponse.json(response, {
+        status: 400,
+      });
     }
 
     if (!body.privacyNoticeAcknowledged) {
@@ -245,12 +268,16 @@ export async function POST(request: NextRequest) {
           "Kişisel verilerin işlenmesine ilişkin aydınlatma metni onaylanmalıdır.",
       };
 
-      return NextResponse.json(response, { status: 400 });
+      return NextResponse.json(response, {
+        status: 400,
+      });
     }
 
     const targetUnit = await prisma.unit.findFirst({
       where: {
-       code: body.targetUnitCode.trim().toUpperCase(),
+        code: body.targetUnitCode
+          .trim()
+          .toUpperCase(),
         isActive: true,
       },
       select: {
@@ -262,10 +289,13 @@ export async function POST(request: NextRequest) {
     if (!targetUnit) {
       const response: ApiErrorResponse = {
         success: false,
-        error: "Seçilen hedef birim bulunamadı veya aktif değil.",
+        error:
+          "Seçilen hedef birim bulunamadı veya aktif değil.",
       };
 
-      return NextResponse.json(response, { status: 400 });
+      return NextResponse.json(response, {
+        status: 400,
+      });
     }
 
     const captchaResult = await verifyCaptcha({
@@ -282,7 +312,9 @@ export async function POST(request: NextRequest) {
           "Güvenlik doğrulaması başarısız.",
       };
 
-      return NextResponse.json(response, { status: 400 });
+      return NextResponse.json(response, {
+        status: 400,
+      });
     }
 
     const identityResult = await verifyIdentity({
@@ -300,10 +332,13 @@ export async function POST(request: NextRequest) {
           "Kimlik bilgileri doğrulanamadı.",
       };
 
-      return NextResponse.json(response, { status: 400 });
+      return NextResponse.json(response, {
+        status: 400,
+      });
     }
 
-    const trackingCode = await createUniqueTrackingCode();
+    const trackingCode =
+      await createUniqueTrackingCode();
 
     const verificationToken =
       createEmailVerificationToken();
@@ -323,7 +358,8 @@ export async function POST(request: NextRequest) {
                 identityResult.referenceId,
               botCheckVerifiedAt: new Date(),
               privacyNoticeVersion,
-              privacyNoticeAcknowledgedAt: new Date(),
+              privacyNoticeAcknowledgedAt:
+                new Date(),
               category: body.category,
               targetUnitId: targetUnit.id,
               subject,
@@ -350,7 +386,8 @@ export async function POST(request: NextRequest) {
             petitionId: createdPetition.id,
             fromStatus: null,
             toStatus: "EMAIL_PENDING",
-            note: "Başvuru oluşturuldu ve e-posta doğrulaması bekleniyor.",
+            note:
+              "Başvuru oluşturuldu ve e-posta doğrulaması bekleniyor.",
           },
         });
 
@@ -361,13 +398,16 @@ export async function POST(request: NextRequest) {
             entityType: "PETITION",
             entityId: String(createdPetition.id),
             newValues: {
-              trackingCode: createdPetition.trackingCode,
+              trackingCode:
+                createdPetition.trackingCode,
               category: body.category,
               targetUnitId: targetUnit.id,
               status: "EMAIL_PENDING",
             },
-            ipAddress: requestInformation.ipAddress,
-            userAgent: requestInformation.userAgent,
+            ipAddress:
+              requestInformation.ipAddress,
+            userAgent:
+              requestInformation.userAgent,
             success: true,
           },
         });
@@ -377,15 +417,19 @@ export async function POST(request: NextRequest) {
     );
 
     const applicationUrl =
-      process.env.APP_URL || "http://localhost:3000";
+      process.env.APP_URL ||
+      "http://localhost:3000";
 
     const verificationUrl =
       `${applicationUrl}/eposta-dogrula?token=` +
-      encodeURIComponent(verificationToken.rawToken);
+      encodeURIComponent(
+        verificationToken.rawToken
+      );
 
     const emailResult = await deliverEmail({
       to: email,
-      subject: "Mersin Üniversitesi Başvuru E-posta Doğrulaması",
+      subject:
+        "Mersin Üniversitesi Başvuru E-posta Doğrulaması",
       text: [
         `Sayın ${firstName} ${lastName},`,
         "",
@@ -404,7 +448,8 @@ export async function POST(request: NextRequest) {
           entityType: "PETITION",
           entityId: String(petition.id),
           metadata: {
-            notificationType: "EMAIL_VERIFICATION",
+            notificationType:
+              "EMAIL_VERIFICATION",
           },
           success: false,
           errorMessage:
@@ -430,7 +475,8 @@ export async function POST(request: NextRequest) {
         entityType: "PETITION",
         entityId: String(petition.id),
         metadata: {
-          notificationType: "EMAIL_VERIFICATION",
+          notificationType:
+            "EMAIL_VERIFICATION",
           provider: emailResult.provider,
         },
         success: true,
@@ -444,18 +490,25 @@ export async function POST(request: NextRequest) {
       verificationRequired: true,
     };
 
-    return NextResponse.json(response, { status: 201 });
+    return NextResponse.json(response, {
+      status: 201,
+    });
   } catch (error) {
     console.error(
       "Başvuru oluşturma hatası:",
-      error instanceof Error ? error.message : "Bilinmeyen hata"
+      error instanceof Error
+        ? error.message
+        : "Bilinmeyen hata"
     );
 
     const response: ApiErrorResponse = {
       success: false,
-      error: "Başvuru oluşturulurken sunucu hatası oluştu.",
+      error:
+        "Başvuru oluşturulurken sunucu hatası oluştu.",
     };
 
-    return NextResponse.json(response, { status: 500 });
+    return NextResponse.json(response, {
+      status: 500,
+    });
   }
 }
