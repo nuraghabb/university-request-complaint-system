@@ -2,27 +2,104 @@ import { NextRequest, NextResponse } from "next/server";
 
 import { prisma } from "@/lib/prisma";
 
+const MAX_TRACKING_CODE_LENGTH = 24;
+const MAX_EMAIL_LENGTH = 255;
+
 interface RouteContext {
   params: Promise<{
     code: string;
   }>;
 }
 
+interface RequestInformation {
+  ipAddress?: string;
+  userAgent?: string;
+}
+
+function getRequestInformation(
+  request: NextRequest
+): RequestInformation {
+  const forwardedFor = request.headers.get("x-forwarded-for");
+
+  return {
+    ipAddress:
+      forwardedFor?.split(",")[0]?.trim() ||
+      request.headers.get("x-real-ip") ||
+      undefined,
+    userAgent:
+      request.headers.get("user-agent") || undefined,
+  };
+}
+
+function isValidTrackingCode(
+  trackingCode: string
+): boolean {
+  return (
+    trackingCode.length >= 6 &&
+    trackingCode.length <= MAX_TRACKING_CODE_LENGTH &&
+    /^[A-Z0-9-]+$/.test(trackingCode)
+  );
+}
+
+function isValidEmail(email: string): boolean {
+  return (
+    email.length <= MAX_EMAIL_LENGTH &&
+    /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)
+  );
+}
+
+function createErrorResponse(
+  error: string,
+  status: number
+) {
+  return NextResponse.json(
+    {
+      success: false,
+      error,
+    },
+    {
+      status,
+      headers: {
+        "Cache-Control":
+          "no-store, no-cache, must-revalidate, private",
+        Pragma: "no-cache",
+      },
+    }
+  );
+}
+
+/**
+ * Başvuru sahibinin takip kodu ve e-posta adresiyle
+ * doğrulanmış başvurusunu görüntülemesini sağlar.
+ *
+ * Kişisel bilgiler, kurum içi cevaplar ve kurum içi
+ * durum notları başvuru sahibine gönderilmez.
+ */
 export async function GET(
   request: NextRequest,
   context: RouteContext
 ) {
+  const requestInformation =
+    getRequestInformation(request);
+
   try {
     const { code } = await context.params;
-    const trackingCode = code.trim().toUpperCase();
+
+    const trackingCode = decodeURIComponent(code)
+      .trim()
+      .toUpperCase();
 
     if (!trackingCode) {
-      return NextResponse.json(
-        {
-          success: false,
-          error: "Takip kodu zorunludur.",
-        },
-        { status: 400 }
+      return createErrorResponse(
+        "Takip kodu zorunludur.",
+        400
+      );
+    }
+
+    if (!isValidTrackingCode(trackingCode)) {
+      return createErrorResponse(
+        "Takip kodu formatı geçersiz.",
+        400
       );
     }
 
@@ -32,13 +109,16 @@ export async function GET(
       .toLowerCase();
 
     if (!email) {
-      return NextResponse.json(
-        {
-          success: false,
-          error:
-            "Başvuruyu görüntülemek için e-posta adresi zorunludur.",
-        },
-        { status: 400 }
+      return createErrorResponse(
+        "Başvuruyu görüntülemek için e-posta adresi zorunludur.",
+        400
+      );
+    }
+
+    if (!isValidEmail(email)) {
+      return createErrorResponse(
+        "Geçerli bir e-posta adresi girin.",
+        400
       );
     }
 
@@ -49,8 +129,12 @@ export async function GET(
         emailVerifiedAt: {
           not: null,
         },
+        status: {
+          not: "EMAIL_PENDING",
+        },
       },
       select: {
+        id: true,
         trackingCode: true,
         category: true,
         status: true,
@@ -71,6 +155,7 @@ export async function GET(
             content: true,
             isFinal: true,
             createdAt: true,
+            updatedAt: true,
           },
           orderBy: {
             createdAt: "asc",
@@ -80,7 +165,6 @@ export async function GET(
           select: {
             fromStatus: true,
             toStatus: true,
-            note: true,
             createdAt: true,
           },
           orderBy: {
@@ -91,13 +175,9 @@ export async function GET(
     });
 
     if (!petition) {
-      return NextResponse.json(
-        {
-          success: false,
-          error:
-            "Başvuru bulunamadı. Takip kodu ve e-posta adresini kontrol edin.",
-        },
-        { status: 404 }
+      return createErrorResponse(
+        "Başvuru bulunamadı. Takip kodu ve e-posta adresini kontrol edin.",
+        404
       );
     }
 
@@ -106,38 +186,44 @@ export async function GET(
         actorType: "APPLICANT",
         action: "READ",
         entityType: "PETITION",
-        entityId: petition.trackingCode,
+        entityId: String(petition.id),
         metadata: {
           source: "TRACKING_PAGE",
+          trackingCode: petition.trackingCode,
         },
         ipAddress:
-          request.headers
-            .get("x-forwarded-for")
-            ?.split(",")[0]
-            ?.trim() ||
-          request.headers.get("x-real-ip") ||
-          undefined,
+          requestInformation.ipAddress,
         userAgent:
-          request.headers.get("user-agent") || undefined,
+          requestInformation.userAgent,
         success: true,
       },
     });
 
-    return NextResponse.json({
-      success: true,
-      petition: {
-        trackingCode: petition.trackingCode,
-        category: petition.category,
-        status: petition.status,
-        priority: petition.priority,
-        subject: petition.subject,
-        targetUnitName: petition.targetUnit.name,
-        createdAt: petition.createdAt,
-        updatedAt: petition.updatedAt,
-        responses: petition.responses,
-        statusHistory: petition.statusHistory,
+    return NextResponse.json(
+      {
+        success: true,
+        petition: {
+          trackingCode: petition.trackingCode,
+          category: petition.category,
+          status: petition.status,
+          priority: petition.priority,
+          subject: petition.subject,
+          targetUnitName: petition.targetUnit.name,
+          createdAt: petition.createdAt,
+          updatedAt: petition.updatedAt,
+          responses: petition.responses,
+          statusHistory: petition.statusHistory,
+        },
       },
-    });
+      {
+        status: 200,
+        headers: {
+          "Cache-Control":
+            "no-store, no-cache, must-revalidate, private",
+          Pragma: "no-cache",
+        },
+      }
+    );
   } catch (error) {
     console.error(
       "Başvuru takip hatası:",
@@ -146,13 +232,9 @@ export async function GET(
         : "Bilinmeyen hata"
     );
 
-    return NextResponse.json(
-      {
-        success: false,
-        error:
-          "Başvuru bilgileri alınırken sunucu hatası oluştu.",
-      },
-      { status: 500 }
+    return createErrorResponse(
+      "Başvuru bilgileri alınırken sunucu hatası oluştu.",
+      500
     );
   }
 }
