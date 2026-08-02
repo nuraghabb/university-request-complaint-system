@@ -24,6 +24,17 @@ const PETITION_CATEGORIES = [
   "ONERI",
 ] as const satisfies readonly PetitionCategory[];
 
+const MAX_FIRST_NAME_LENGTH = 100;
+const MAX_LAST_NAME_LENGTH = 100;
+const MAX_EMAIL_LENGTH = 255;
+const MAX_PHONE_LENGTH = 20;
+const MAX_TARGET_UNIT_CODE_LENGTH = 50;
+const MAX_SUBJECT_LENGTH = 500;
+const MAX_CONTENT_LENGTH = 10_000;
+const MAX_PRIVACY_NOTICE_VERSION_LENGTH = 30;
+
+const MIN_BIRTH_YEAR = 1900;
+
 interface RequestInformation {
   ipAddress?: string;
   userAgent?: string;
@@ -45,7 +56,32 @@ function getRequestInformation(
 }
 
 function isValidEmail(email: string): boolean {
-  return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
+  return (
+    email.length <= MAX_EMAIL_LENGTH &&
+    /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)
+  );
+}
+
+function isValidPhone(phone: string): boolean {
+  if (phone.length > MAX_PHONE_LENGTH) {
+    return false;
+  }
+
+  return /^[0-9+\s()-]+$/.test(phone);
+}
+
+function isValidTcKimlik(tcKimlik: string): boolean {
+  return /^\d{11}$/.test(tcKimlik);
+}
+
+function isValidBirthYear(birthYear: number): boolean {
+  const currentYear = new Date().getFullYear();
+
+  return (
+    Number.isInteger(birthYear) &&
+    birthYear >= MIN_BIRTH_YEAR &&
+    birthYear <= currentYear
+  );
 }
 
 function isPetitionCategory(
@@ -82,6 +118,20 @@ function isCreatePetitionRequest(
     typeof value.captchaToken === "string" &&
     typeof value.privacyNoticeVersion === "string" &&
     typeof value.privacyNoticeAcknowledged === "boolean"
+  );
+}
+
+function createValidationError(
+  error: string
+): NextResponse<ApiErrorResponse> {
+  return NextResponse.json(
+    {
+      success: false,
+      error,
+    },
+    {
+      status: 400,
+    }
   );
 }
 
@@ -241,18 +291,15 @@ export async function POST(request: NextRequest) {
     const body: unknown = await request.json();
 
     if (!isCreatePetitionRequest(body)) {
-      const response: ApiErrorResponse = {
-        success: false,
-        error: "Başvuru bilgileri eksik veya geçersiz.",
-      };
-
-      return NextResponse.json(response, {
-        status: 400,
-      });
+      return createValidationError(
+        "Başvuru bilgileri eksik veya geçersiz."
+      );
     }
 
     const firstName = body.identity.firstName.trim();
     const lastName = body.identity.lastName.trim();
+    const tcKimlik = body.identity.tcKimlik.trim();
+    const birthYear = body.identity.birthYear;
     const email = body.email.trim().toLowerCase();
     const phone = body.phone?.trim() || undefined;
     const category = body.category
@@ -263,49 +310,118 @@ export async function POST(request: NextRequest) {
       .toUpperCase();
     const subject = body.subject.trim();
     const content = body.content.trim();
+    const captchaToken = body.captchaToken.trim();
     const privacyNoticeVersion =
       body.privacyNoticeVersion.trim();
 
-    if (
-      !firstName ||
-      !lastName ||
-      !isValidEmail(email) ||
-      !subject ||
-      !content ||
-      !privacyNoticeVersion
-    ) {
-      const response: ApiErrorResponse = {
-        success: false,
-        error:
-          "Zorunlu başvuru alanlarını eksiksiz doldurun.",
-      };
+    if (!firstName) {
+      return createValidationError(
+        "Ad alanı boş bırakılamaz."
+      );
+    }
 
-      return NextResponse.json(response, {
-        status: 400,
-      });
+    if (firstName.length > MAX_FIRST_NAME_LENGTH) {
+      return createValidationError(
+        `Ad en fazla ${MAX_FIRST_NAME_LENGTH} karakter olabilir.`
+      );
+    }
+
+    if (!lastName) {
+      return createValidationError(
+        "Soyad alanı boş bırakılamaz."
+      );
+    }
+
+    if (lastName.length > MAX_LAST_NAME_LENGTH) {
+      return createValidationError(
+        `Soyad en fazla ${MAX_LAST_NAME_LENGTH} karakter olabilir.`
+      );
+    }
+
+    if (!isValidTcKimlik(tcKimlik)) {
+      return createValidationError(
+        "T.C. kimlik numarası 11 rakamdan oluşmalıdır."
+      );
+    }
+
+    if (!isValidBirthYear(birthYear)) {
+      return createValidationError(
+        `Doğum yılı ${MIN_BIRTH_YEAR} ile ${new Date().getFullYear()} arasında geçerli bir tam sayı olmalıdır.`
+      );
+    }
+
+    if (!isValidEmail(email)) {
+      return createValidationError(
+        "Geçerli bir e-posta adresi girin."
+      );
+    }
+
+    if (phone && !isValidPhone(phone)) {
+      return createValidationError(
+        `Telefon numarası geçersiz veya ${MAX_PHONE_LENGTH} karakterden uzun.`
+      );
     }
 
     if (!isPetitionCategory(category)) {
-      const response: ApiErrorResponse = {
-        success: false,
-        error: "Seçilen başvuru kategorisi geçersiz.",
-      };
+      return createValidationError(
+        "Seçilen başvuru kategorisi geçersiz."
+      );
+    }
 
-      return NextResponse.json(response, {
-        status: 400,
-      });
+    if (
+      !targetUnitCode ||
+      targetUnitCode.length >
+        MAX_TARGET_UNIT_CODE_LENGTH
+    ) {
+      return createValidationError(
+        "Seçilen hedef birim kodu geçersiz."
+      );
+    }
+
+    if (!subject) {
+      return createValidationError(
+        "Başvuru konusu boş bırakılamaz."
+      );
+    }
+
+    if (subject.length > MAX_SUBJECT_LENGTH) {
+      return createValidationError(
+        `Başvuru konusu en fazla ${MAX_SUBJECT_LENGTH} karakter olabilir.`
+      );
+    }
+
+    if (!content) {
+      return createValidationError(
+        "Başvuru içeriği boş bırakılamaz."
+      );
+    }
+
+    if (content.length > MAX_CONTENT_LENGTH) {
+      return createValidationError(
+        `Başvuru içeriği en fazla ${MAX_CONTENT_LENGTH} karakter olabilir.`
+      );
+    }
+
+    if (!captchaToken) {
+      return createValidationError(
+        "Güvenlik doğrulaması tamamlanmalıdır."
+      );
+    }
+
+    if (
+      !privacyNoticeVersion ||
+      privacyNoticeVersion.length >
+        MAX_PRIVACY_NOTICE_VERSION_LENGTH
+    ) {
+      return createValidationError(
+        "Aydınlatma metni sürüm bilgisi geçersiz."
+      );
     }
 
     if (!body.privacyNoticeAcknowledged) {
-      const response: ApiErrorResponse = {
-        success: false,
-        error:
-          "Kişisel verilerin işlenmesine ilişkin aydınlatma metni onaylanmalıdır.",
-      };
-
-      return NextResponse.json(response, {
-        status: 400,
-      });
+      return createValidationError(
+        "Kişisel verilerin işlenmesine ilişkin aydınlatma metni onaylanmalıdır."
+      );
     }
 
     const targetUnit = await prisma.unit.findFirst({
@@ -320,54 +436,36 @@ export async function POST(request: NextRequest) {
     });
 
     if (!targetUnit) {
-      const response: ApiErrorResponse = {
-        success: false,
-        error:
-          "Seçilen hedef birim bulunamadı veya aktif değil.",
-      };
-
-      return NextResponse.json(response, {
-        status: 400,
-      });
+      return createValidationError(
+        "Seçilen hedef birim bulunamadı veya aktif değil."
+      );
     }
 
     const captchaResult = await verifyCaptcha({
-      token: body.captchaToken,
+      token: captchaToken,
       remoteIp: requestInformation.ipAddress,
       expectedAction: "create_petition",
     });
 
     if (!captchaResult.success) {
-      const response: ApiErrorResponse = {
-        success: false,
-        error:
-          captchaResult.message ||
-          "Güvenlik doğrulaması başarısız.",
-      };
-
-      return NextResponse.json(response, {
-        status: 400,
-      });
+      return createValidationError(
+        captchaResult.message ||
+          "Güvenlik doğrulaması başarısız."
+      );
     }
 
     const identityResult = await verifyIdentity({
       firstName,
       lastName,
-      tcKimlik: body.identity.tcKimlik,
-      birthYear: body.identity.birthYear,
+      tcKimlik,
+      birthYear,
     });
 
     if (!identityResult.verified) {
-      const response: ApiErrorResponse = {
-        success: false,
-        error:
-          identityResult.message ||
-          "Kimlik bilgileri doğrulanamadı.",
-      };
-
-      return NextResponse.json(response, {
-        status: 400,
-      });
+      return createValidationError(
+        identityResult.message ||
+          "Kimlik bilgileri doğrulanamadı."
+      );
     }
 
     const trackingCode =
