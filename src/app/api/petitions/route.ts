@@ -1,5 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 
+import type { PetitionCategory } from "@prisma/client";
+
 import { generateTrackingCode } from "@/lib/constants";
 import { verifyToken } from "@/lib/jwt";
 import { prisma } from "@/lib/prisma";
@@ -13,6 +15,14 @@ import type {
   CreatePetitionRequest,
   CreatePetitionSuccessResponse,
 } from "@/types/petition";
+
+const PETITION_CATEGORIES = [
+  "TALEP",
+  "SIKAYET",
+  "BILGI_EDINME",
+  "TESEKKUR",
+  "ONERI",
+] as const satisfies readonly PetitionCategory[];
 
 interface RequestInformation {
   ipAddress?: string;
@@ -36,6 +46,14 @@ function getRequestInformation(
 
 function isValidEmail(email: string): boolean {
   return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
+}
+
+function isPetitionCategory(
+  value: string
+): value is PetitionCategory {
+  return (
+    PETITION_CATEGORIES as readonly string[]
+  ).includes(value);
 }
 
 function isCreatePetitionRequest(
@@ -237,6 +255,12 @@ export async function POST(request: NextRequest) {
     const lastName = body.identity.lastName.trim();
     const email = body.email.trim().toLowerCase();
     const phone = body.phone?.trim() || undefined;
+    const category = body.category
+      .trim()
+      .toUpperCase();
+    const targetUnitCode = body.targetUnitCode
+      .trim()
+      .toUpperCase();
     const subject = body.subject.trim();
     const content = body.content.trim();
     const privacyNoticeVersion =
@@ -261,6 +285,17 @@ export async function POST(request: NextRequest) {
       });
     }
 
+    if (!isPetitionCategory(category)) {
+      const response: ApiErrorResponse = {
+        success: false,
+        error: "Seçilen başvuru kategorisi geçersiz.",
+      };
+
+      return NextResponse.json(response, {
+        status: 400,
+      });
+    }
+
     if (!body.privacyNoticeAcknowledged) {
       const response: ApiErrorResponse = {
         success: false,
@@ -275,9 +310,7 @@ export async function POST(request: NextRequest) {
 
     const targetUnit = await prisma.unit.findFirst({
       where: {
-        code: body.targetUnitCode
-          .trim()
-          .toUpperCase(),
+        code: targetUnitCode,
         isActive: true,
       },
       select: {
@@ -360,7 +393,7 @@ export async function POST(request: NextRequest) {
               privacyNoticeVersion,
               privacyNoticeAcknowledgedAt:
                 new Date(),
-              category: body.category,
+              category,
               targetUnitId: targetUnit.id,
               subject,
               content,
@@ -400,7 +433,7 @@ export async function POST(request: NextRequest) {
             newValues: {
               trackingCode:
                 createdPetition.trackingCode,
-              category: body.category,
+              category,
               targetUnitId: targetUnit.id,
               status: "EMAIL_PENDING",
             },
