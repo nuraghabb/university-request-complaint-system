@@ -1,24 +1,17 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 
-import {
-  CATEGORY_ICONS,
-  CATEGORY_LABELS,
-  TARGET_UNIT_LABELS,
-} from "@/lib/constants";
+import { TARGET_UNIT_LABELS } from "@/lib/constants";
 
 import type {
   ApiErrorResponse,
   CreatePetitionFormData,
   CreatePetitionRequest,
   CreatePetitionSuccessResponse,
-  PetitionCategory,
+  CategoriesSuccessResponse,
+  CategoryOption,
 } from "@/types/petition";
-
-const CATEGORIES = Object.entries(CATEGORY_LABELS) as Array<
-  [PetitionCategory, string]
->;
 
 const TARGET_UNITS = Object.entries(TARGET_UNIT_LABELS);
 
@@ -52,6 +45,70 @@ export default function NewPetitionForm({
 
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
+  const [categories, setCategories] = useState<CategoryOption[]>([]);
+  const [categoriesLoading, setCategoriesLoading] = useState(true);
+  const [categoriesError, setCategoriesError] = useState("");
+
+  useEffect(() => {
+    const controller = new AbortController();
+
+    async function loadCategories(): Promise<void> {
+      setCategoriesLoading(true);
+      setCategoriesError("");
+
+      try {
+        const response = await fetch("/api/categories", {
+          method: "GET",
+          signal: controller.signal,
+          cache: "no-store",
+        });
+
+        const data = (await response.json()) as
+          | CategoriesSuccessResponse
+          | ApiErrorResponse;
+
+        if (!response.ok || !data.success) {
+          const message =
+            "error" in data
+              ? data.error
+              : "Kategoriler alınamadı.";
+
+          setCategoriesError(message);
+          return;
+        }
+
+        setCategories(data.categories);
+      } catch (categoryError) {
+        if (
+          categoryError instanceof DOMException &&
+          categoryError.name === "AbortError"
+        ) {
+          return;
+        }
+
+        console.error(
+          "Kategori listesi alınamadı:",
+          categoryError instanceof Error
+            ? categoryError.message
+            : "Bilinmeyen hata"
+        );
+
+        setCategoriesError(
+          "Kategoriler yüklenemedi. Lütfen formu kapatıp tekrar açın."
+        );
+      } finally {
+        if (!controller.signal.aborted) {
+          setCategoriesLoading(false);
+        }
+      }
+    }
+
+    void loadCategories();
+
+    return () => {
+      controller.abort();
+    };
+  }, []);
 
   function handleChange(
     event: React.ChangeEvent<
@@ -426,6 +483,16 @@ export default function NewPetitionForm({
 
             <div className="divider" />
 
+            {categoriesError && (
+              <div
+                className="alert alert-error"
+                role="alert"
+                style={{ marginBottom: 16 }}
+              >
+                ⚠️ {categoriesError}
+              </div>
+            )}
+
             <div
               style={{
                 display: "grid",
@@ -448,16 +515,24 @@ export default function NewPetitionForm({
                   className="form-control"
                   value={form.category}
                   onChange={handleChange}
-                  disabled={loading}
+                  disabled={
+                    loading ||
+                    categoriesLoading ||
+                    categories.length === 0
+                  }
                 >
-                  <option value="">Seçiniz...</option>
+                  <option value="">
+                    {categoriesLoading
+                      ? "Kategoriler yükleniyor..."
+                      : "Seçiniz..."}
+                  </option>
 
-                  {CATEGORIES.map(([value, label]) => (
+                  {categories.map((category) => (
                     <option
-                      key={value}
-                      value={value}
+                      key={category.id}
+                      value={category.code}
                     >
-                      {CATEGORY_ICONS[value]} {label}
+                      {category.name}
                     </option>
                   ))}
                 </select>

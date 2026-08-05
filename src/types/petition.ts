@@ -1,9 +1,8 @@
-export type PetitionCategory =
-  | "TALEP"
-  | "SIKAYET"
-  | "BILGI_EDINME"
-  | "TESEKKUR"
-  | "ONERI";
+/**
+ * Kategoriler artık veritabanından yönetilir.
+ * Bu değer Category.code alanını temsil eder.
+ */
+export type PetitionCategory = string;
 
 export type PetitionStatus =
   | "EMAIL_PENDING"
@@ -20,6 +19,18 @@ export type PetitionPriority =
   | "NORMAL"
   | "HIGH"
   | "URGENT";
+
+export interface CategoryOption {
+  id: number;
+  code: string;
+  name: string;
+  description: string | null;
+}
+
+export interface CategoriesSuccessResponse {
+  success: true;
+  categories: CategoryOption[];
+}
 
 export interface UnitOption {
   code: string;
@@ -45,7 +56,12 @@ export interface CreatePetitionFormData {
   birthYear: string;
   email: string;
   phone: string;
-  category: PetitionCategory | "";
+
+  /**
+   * Veritabanındaki Category.code değeri.
+   */
+  category: string;
+
   targetUnitCode: string;
   subject: string;
   content: string;
@@ -62,7 +78,12 @@ export interface CreatePetitionRequest {
   identity: IdentityVerificationInput;
   email: string;
   phone?: string;
-  category: PetitionCategory;
+
+  /**
+   * Veritabanındaki Category.code değeri.
+   */
+  category: string;
+
   targetUnitCode: string;
   subject: string;
   content: string;
