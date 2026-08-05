@@ -12,14 +12,6 @@ enum StaffRole {
   UNIT_STAFF
 }
 
-enum PetitionCategory {
-  TALEP
-  SIKAYET
-  BILGI_EDINME
-  TESEKKUR
-  ONERI
-}
-
 enum PetitionStatus {
   EMAIL_PENDING
   RECEIVED
@@ -130,6 +122,21 @@ model Unit {
   @@map("units")
 }
 
+model Category {
+  id          Int      @id @default(autoincrement())
+  code        String   @unique @db.VarChar(50)
+  name        String   @db.VarChar(150)
+  description String?  @db.Text
+  isActive    Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  petitions Petition[]
+
+  @@index([isActive])
+  @@map("categories")
+}
+
 model Petition {
   id           Int    @id @default(autoincrement())
   trackingCode String @unique @db.VarChar(24)
@@ -154,7 +161,8 @@ model Petition {
 
   emailVerifiedAt DateTime?
 
-  category PetitionCategory
+  categoryId Int
+  category   Category @relation(fields: [categoryId], references: [id], onDelete: Restrict)
 
   targetUnitId Int
   targetUnit   Unit @relation(fields: [targetUnitId], references: [id], onDelete: Restrict)
@@ -178,6 +186,7 @@ model Petition {
   statusHistory      PetitionStatusHistory[]
   notifications      NotificationOutbox[]
 
+  @@index([categoryId])
   @@index([targetUnitId, status])
   @@index([assignedStaffId, status])
   @@index([applicantEmail])

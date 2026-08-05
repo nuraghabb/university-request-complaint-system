@@ -1,7 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
 
-import type { PetitionCategory } from "@prisma/client";
-
 import { generateTrackingCode } from "@/lib/constants";
 import { verifyToken } from "@/lib/jwt";
 import { prisma } from "@/lib/prisma";
@@ -16,18 +14,11 @@ import type {
   CreatePetitionSuccessResponse,
 } from "@/types/petition";
 
-const PETITION_CATEGORIES = [
-  "TALEP",
-  "SIKAYET",
-  "BILGI_EDINME",
-  "TESEKKUR",
-  "ONERI",
-] as const satisfies readonly PetitionCategory[];
-
 const MAX_FIRST_NAME_LENGTH = 100;
 const MAX_LAST_NAME_LENGTH = 100;
 const MAX_EMAIL_LENGTH = 255;
 const MAX_PHONE_LENGTH = 20;
+const MAX_CATEGORY_CODE_LENGTH = 50;
 const MAX_TARGET_UNIT_CODE_LENGTH = 50;
 const MAX_SUBJECT_LENGTH = 500;
 const MAX_CONTENT_LENGTH = 10_000;
@@ -82,14 +73,6 @@ function isValidBirthYear(birthYear: number): boolean {
     birthYear >= MIN_BIRTH_YEAR &&
     birthYear <= currentYear
   );
-}
-
-function isPetitionCategory(
-  value: string
-): value is PetitionCategory {
-  return (
-    PETITION_CATEGORIES as readonly string[]
-  ).includes(value);
 }
 
 function isCreatePetitionRequest(
@@ -231,7 +214,13 @@ export async function GET(request: NextRequest) {
         trackingCode: true,
         applicantFirstName: true,
         applicantLastName: true,
-        category: true,
+        category: {
+          select: {
+            id: true,
+            code: true,
+            name: true,
+          },
+        },
         status: true,
         priority: true,
         subject: true,
@@ -362,7 +351,10 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    if (!isPetitionCategory(category)) {
+    if (
+      !category ||
+      category.length > MAX_CATEGORY_CODE_LENGTH
+    ) {
       return createValidationError(
         "Seçilen başvuru kategorisi geçersiz."
       );
@@ -421,6 +413,25 @@ export async function POST(request: NextRequest) {
     if (!body.privacyNoticeAcknowledged) {
       return createValidationError(
         "Kişisel verilerin işlenmesine ilişkin aydınlatma metni onaylanmalıdır."
+      );
+    }
+
+    const selectedCategory =
+      await prisma.category.findFirst({
+        where: {
+          code: category,
+          isActive: true,
+        },
+        select: {
+          id: true,
+          code: true,
+          name: true,
+        },
+      });
+
+    if (!selectedCategory) {
+      return createValidationError(
+        "Seçilen başvuru kategorisi bulunamadı veya aktif değil."
       );
     }
 
@@ -491,7 +502,7 @@ export async function POST(request: NextRequest) {
               privacyNoticeVersion,
               privacyNoticeAcknowledgedAt:
                 new Date(),
-              category,
+              categoryId: selectedCategory.id,
               targetUnitId: targetUnit.id,
               subject,
               content,
@@ -531,7 +542,8 @@ export async function POST(request: NextRequest) {
             newValues: {
               trackingCode:
                 createdPetition.trackingCode,
-              category,
+              categoryId: selectedCategory.id,
+              categoryCode: selectedCategory.code,
               targetUnitId: targetUnit.id,
               status: "EMAIL_PENDING",
             },
