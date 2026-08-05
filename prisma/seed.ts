@@ -1,15 +1,19 @@
-import "dotenv/config";
+import dotenv from "dotenv";
 
 import { PrismaPg } from "@prisma/adapter-pg";
 import { PrismaClient } from "@prisma/client";
 import bcrypt from "bcryptjs";
+
+dotenv.config({
+  path: ".env.local",
+});
 
 function getRequiredEnvironmentVariable(name: string): string {
   const value = process.env[name];
 
   if (!value) {
     throw new Error(
-      `${name} tanımlı değil. Seed çalıştırmadan önce .env dosyasını kontrol edin.`
+      `${name} tanımlı değil. Seed çalıştırmadan önce .env.local dosyasını kontrol edin.`
     );
   }
 
@@ -35,6 +39,39 @@ const adapter = new PrismaPg({
 const prisma = new PrismaClient({
   adapter,
 });
+
+const categories = [
+  {
+    code: "TALEP",
+    name: "Talep",
+    description:
+      "Üniversite birimlerinden hizmet, işlem veya destek talep edilen başvurular.",
+  },
+  {
+    code: "SIKAYET",
+    name: "Şikâyet",
+    description:
+      "Üniversite hizmetleri, işlemleri veya uygulamalarıyla ilgili şikâyet başvuruları.",
+  },
+  {
+    code: "BILGI_EDINME",
+    name: "Bilgi Edinme",
+    description:
+      "Üniversiteyle ilgili bilgi edinmek amacıyla oluşturulan başvurular.",
+  },
+  {
+    code: "TESEKKUR",
+    name: "Teşekkür",
+    description:
+      "Üniversite personeli, birimleri veya hizmetleriyle ilgili teşekkür başvuruları.",
+  },
+  {
+    code: "ONERI",
+    name: "Öneri",
+    description:
+      "Üniversite hizmetlerinin ve süreçlerinin geliştirilmesine yönelik öneriler.",
+  },
+] as const;
 
 const units = [
   {
@@ -104,9 +141,28 @@ const units = [
   },
 ] as const;
 
-async function main(): Promise<void> {
-  console.log("🌱 Seed işlemi başlıyor...");
+async function seedCategories(): Promise<void> {
+  for (const category of categories) {
+    await prisma.category.upsert({
+      where: {
+        code: category.code,
+      },
+      update: {
+        name: category.name,
+        description: category.description,
+        isActive: true,
+      },
+      create: {
+        code: category.code,
+        name: category.name,
+        description: category.description,
+        isActive: true,
+      },
+    });
+  }
+}
 
+async function seedUnits(): Promise<void> {
   for (const unit of units) {
     await prisma.unit.upsert({
       where: {
@@ -125,7 +181,9 @@ async function main(): Promise<void> {
       },
     });
   }
+}
 
+async function seedAdminUser(): Promise<void> {
   const bilgiIslemUnit = await prisma.unit.findUnique({
     where: {
       code: "BILGI_ISLEM",
@@ -168,8 +226,17 @@ async function main(): Promise<void> {
       isActive: true,
     },
   });
+}
+
+async function main(): Promise<void> {
+  console.log("🌱 Seed işlemi başlıyor...");
+
+  await seedCategories();
+  await seedUnits();
+  await seedAdminUser();
 
   console.log("✅ Seed işlemi tamamlandı.");
+  console.log("📌 Başvuru kategorileri oluşturuldu.");
   console.log("📌 Üniversite birimleri oluşturuldu.");
   console.log(
     "📌 Yönetici hesabı oluşturuldu veya güncellendi."
@@ -178,7 +245,7 @@ async function main(): Promise<void> {
     "📧 Yönetici e-postası: admin@mersin.edu.tr"
   );
   console.log(
-    "🔐 Yönetici şifresi .env içindeki SEED_ADMIN_PASSWORD değeridir."
+    "🔐 Yönetici şifresi .env.local içindeki SEED_ADMIN_PASSWORD değeridir."
   );
 }
 
