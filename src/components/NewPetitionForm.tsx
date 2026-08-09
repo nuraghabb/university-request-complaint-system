@@ -2,8 +2,6 @@
 
 import { useEffect, useState } from "react";
 
-import { TARGET_UNIT_LABELS } from "@/lib/constants";
-
 import type {
   ApiErrorResponse,
   CreatePetitionFormData,
@@ -11,9 +9,8 @@ import type {
   CreatePetitionSuccessResponse,
   CategoriesSuccessResponse,
   CategoryOption,
+  UnitOption,
 } from "@/types/petition";
-
-const TARGET_UNITS = Object.entries(TARGET_UNIT_LABELS);
 
 const PRIVACY_NOTICE_VERSION = "2026-08-01";
 
@@ -48,6 +45,10 @@ export default function NewPetitionForm({
   const [categories, setCategories] = useState<CategoryOption[]>([]);
   const [categoriesLoading, setCategoriesLoading] = useState(true);
   const [categoriesError, setCategoriesError] = useState("");
+
+  const [units, setUnits] = useState<UnitOption[]>([]);
+  const [unitsLoading, setUnitsLoading] = useState(true);
+  const [unitsError, setUnitsError] = useState("");
 
   useEffect(() => {
     const controller = new AbortController();
@@ -104,6 +105,70 @@ export default function NewPetitionForm({
     }
 
     void loadCategories();
+
+    return () => {
+      controller.abort();
+    };
+  }, []);
+
+  useEffect(() => {
+    const controller = new AbortController();
+
+    async function loadUnits(): Promise<void> {
+      setUnitsLoading(true);
+      setUnitsError("");
+
+      try {
+        const response = await fetch("/api/public/units", {
+          method: "GET",
+          signal: controller.signal,
+          cache: "no-store",
+        });
+
+        const data = (await response.json()) as
+          | {
+              success: true;
+              units: UnitOption[];
+            }
+          | ApiErrorResponse;
+
+        if (!response.ok || !data.success) {
+          const message =
+            "error" in data
+              ? data.error
+              : "Birimler alınamadı.";
+
+          setUnitsError(message);
+          return;
+        }
+
+        setUnits(data.units);
+      } catch (unitError) {
+        if (
+          unitError instanceof DOMException &&
+          unitError.name === "AbortError"
+        ) {
+          return;
+        }
+
+        console.error(
+          "Birim listesi alınamadı:",
+          unitError instanceof Error
+            ? unitError.message
+            : "Bilinmeyen hata"
+        );
+
+        setUnitsError(
+          "Birimler yüklenemedi. Lütfen formu kapatıp tekrar açın."
+        );
+      } finally {
+        if (!controller.signal.aborted) {
+          setUnitsLoading(false);
+        }
+      }
+    }
+
+    void loadUnits();
 
     return () => {
       controller.abort();
@@ -493,6 +558,16 @@ export default function NewPetitionForm({
               </div>
             )}
 
+            {unitsError && (
+              <div
+                className="alert alert-error"
+                role="alert"
+                style={{ marginBottom: 16 }}
+              >
+                ⚠️ {unitsError}
+              </div>
+            )}
+
             <div
               style={{
                 display: "grid",
@@ -553,16 +628,24 @@ export default function NewPetitionForm({
                   className="form-control"
                   value={form.targetUnitCode}
                   onChange={handleChange}
-                  disabled={loading}
+                  disabled={
+                    loading ||
+                    unitsLoading ||
+                    units.length === 0
+                  }
                 >
-                  <option value="">Seçiniz...</option>
+                  <option value="">
+                    {unitsLoading
+                      ? "Birimler yükleniyor..."
+                      : "Seçiniz..."}
+                  </option>
 
-                  {TARGET_UNITS.map(([code, name]) => (
+                  {units.map((unit) => (
                     <option
-                      key={code}
-                      value={code}
+                      key={unit.code}
+                      value={unit.code}
                     >
-                      {name}
+                      {unit.name}
                     </option>
                   ))}
                 </select>
