@@ -4,17 +4,29 @@ import { useState } from "react";
 
 import NewPetitionForm from "@/components/NewPetitionForm";
 
+interface PetitionSuccessData {
+  message: string;
+  developmentVerificationUrl?: string;
+}
+
 export default function GuestPage() {
   const [showForm, setShowForm] = useState(false);
-  const [successMessage, setSuccessMessage] = useState("");
+  const [successData, setSuccessData] =
+    useState<PetitionSuccessData | null>(null);
 
-  function handleSuccess(message: string) {
+  function handleSuccess(
+    message: string,
+    developmentVerificationUrl?: string
+  ) {
     setShowForm(false);
-    setSuccessMessage(message);
+    setSuccessData({
+      message,
+      developmentVerificationUrl,
+    });
   }
 
   function handleNewPetition() {
-    setSuccessMessage("");
+    setSuccessData(null);
     setShowForm(true);
   }
 
@@ -71,7 +83,7 @@ export default function GuestPage() {
 
         <div className="card">
           <div className="card-body">
-            {successMessage ? (
+            {successData ? (
               <div
                 style={{
                   textAlign: "center",
@@ -104,7 +116,7 @@ export default function GuestPage() {
                     lineHeight: 1.7,
                   }}
                 >
-                  {successMessage}
+                  {successData.message}
                 </p>
 
                 <div
@@ -131,13 +143,29 @@ export default function GuestPage() {
                   </p>
                 </div>
 
-                <button
-                  type="button"
-                  className="btn btn-primary"
-                  onClick={handleNewPetition}
-                >
-                  Yeni Başvuru Oluştur
-                </button>
+                {successData.developmentVerificationUrl && (
+                  <a
+                    href={successData.developmentVerificationUrl}
+                    className="btn btn-primary"
+                    style={{
+                      display: "inline-flex",
+                      marginBottom: 12,
+                      textDecoration: "none",
+                    }}
+                  >
+                    Test Doğrulama Bağlantısını Aç
+                  </a>
+                )}
+
+                <div>
+                  <button
+                    type="button"
+                    className="btn btn-ghost"
+                    onClick={handleNewPetition}
+                  >
+                    Yeni Başvuru Oluştur
+                  </button>
+                </div>
               </div>
             ) : (
               <div style={{ textAlign: "center" }}>
