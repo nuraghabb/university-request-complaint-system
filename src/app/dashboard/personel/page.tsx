@@ -21,12 +21,11 @@ type PetitionPriority =
   | "HIGH"
   | "URGENT";
 
-type PetitionCategory =
-  | "TALEP"
-  | "SIKAYET"
-  | "BILGI_EDINME"
-  | "TESEKKUR"
-  | "ONERI";
+interface PetitionCategory {
+  id: number;
+  code: string;
+  name: string;
+}
 
 interface StaffUser {
   id: number;
@@ -81,22 +80,6 @@ const ROLE_LABELS: Record<StaffRole, string> = {
   ADMIN: "Sistem Yöneticisi",
   UNIT_MANAGER: "Birim Yöneticisi",
   UNIT_STAFF: "Birim Personeli",
-};
-
-const CATEGORY_LABELS: Record<PetitionCategory, string> = {
-  TALEP: "Talep",
-  SIKAYET: "Şikâyet",
-  BILGI_EDINME: "Bilgi Edinme",
-  TESEKKUR: "Teşekkür",
-  ONERI: "Öneri",
-};
-
-const CATEGORY_ICONS: Record<PetitionCategory, string> = {
-  TALEP: "📋",
-  SIKAYET: "⚠️",
-  BILGI_EDINME: "ℹ️",
-  TESEKKUR: "🙏",
-  ONERI: "💡",
 };
 
 const STATUS_LABELS: Record<PetitionStatus, string> = {
@@ -224,7 +207,7 @@ export default function PersonelDashboardPage() {
         petition.applicantLastName,
         petition.subject,
         petition.targetUnit.name,
-        CATEGORY_LABELS[petition.category],
+        petition.category.name,
       ]
         .join(" ")
         .toLocaleLowerCase("tr-TR");
@@ -320,13 +303,34 @@ export default function PersonelDashboardPage() {
             </p>
           </div>
 
-          <button
-            type="button"
-            className="btn btn-ghost btn-sm"
-            onClick={handleLogout}
+          <div
+            style={{
+              display: "flex",
+              alignItems: "center",
+              gap: 10,
+              flexWrap: "wrap",
+            }}
           >
-            Çıkış Yap
-          </button>
+            {user.role === "ADMIN" && (
+              <button
+                type="button"
+                className="btn btn-outline btn-sm"
+                onClick={() =>
+                  router.push("/dashboard/admin/categories")
+                }
+              >
+                Kategori Yönetimi
+              </button>
+            )}
+
+            <button
+              type="button"
+              className="btn btn-ghost btn-sm"
+              onClick={handleLogout}
+            >
+              Çıkış Yap
+            </button>
+          </div>
         </div>
       </header>
 
@@ -651,8 +655,7 @@ function PetitionCard({
                 fontWeight: 600,
               }}
             >
-              {CATEGORY_ICONS[petition.category]}{" "}
-              {CATEGORY_LABELS[petition.category]}
+              🏷️ {petition.category.name}
             </span>
           </div>
 
