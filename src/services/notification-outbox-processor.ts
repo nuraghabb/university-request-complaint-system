@@ -41,8 +41,16 @@ interface NotificationPayload {
   applicantName?: unknown;
   trackingCode?: unknown;
   status?: unknown;
+  subject?: unknown;
+  reason?: unknown;
+  fromUnitName?: unknown;
+  toUnitName?: unknown;
+  assignedStaffId?: unknown;
+  responseId?: unknown;
+  isFinal?: unknown;
   text?: unknown;
   html?: unknown;
+ 
 }
 
 function normalizeBatchSize(
@@ -102,6 +110,17 @@ function requireString(
   return value.trim();
 }
 
+function getOptionalHtml(
+  payload: NotificationPayload
+): string | undefined {
+  return (
+    typeof payload.html === "string" &&
+    payload.html.trim()
+      ? payload.html.trim()
+      : undefined
+  );
+}
+
 function buildEmailContent(
   type: NotificationType,
   payloadValue: Prisma.JsonValue
@@ -133,27 +152,213 @@ function buildEmailContent(
       };
     }
 
-    case "PETITION_ASSIGNED":
-    case "PETITION_FORWARDED":
-    case "PETITION_ANSWERED":
-    case "PETITION_CLOSED":
-    case "PETITION_REJECTED": {
-      const text = requireString(
-        payload.text,
-        "text"
+    case "PETITION_ASSIGNED": {
+      /*
+       * Eski/özel kayıtlar doğrudan text içeriyorsa
+       * onu kullanmaya devam ederiz.
+       */
+      if (
+        typeof payload.text === "string" &&
+        payload.text.trim()
+      ) {
+        return {
+          text: payload.text.trim(),
+          html: getOptionalHtml(payload),
+        };
+      }
+
+      const trackingCode = requireString(
+        payload.trackingCode,
+        "trackingCode"
       );
 
-      const html =
-        typeof payload.html === "string" &&
-        payload.html.trim()
-          ? payload.html.trim()
-          : undefined;
+      const petitionSubject = requireString(
+        payload.subject,
+        "subject"
+      );
 
       return {
-        text,
-        html,
+        text: [
+          "Yeni bir başvuru tarafınıza atanmıştır.",
+          "",
+          `Başvuru konusu: ${petitionSubject}`,
+          `Takip kodu: ${trackingCode}`,
+          "",
+          "Başvurunun değerlendirme sürecine alınması gerekmektedir.",
+        ].join("\n"),
       };
     }
+
+    case "PETITION_FORWARDED": {
+      /*
+       * Eski/özel kayıtlar doğrudan text içeriyorsa
+       * onu kullanmaya devam ederiz.
+       */
+      if (
+        typeof payload.text === "string" &&
+        payload.text.trim()
+      ) {
+        return {
+          text: payload.text.trim(),
+          html: getOptionalHtml(payload),
+        };
+      }
+
+      const trackingCode = requireString(
+        payload.trackingCode,
+        "trackingCode"
+      );
+
+      const petitionSubject = requireString(
+        payload.subject,
+        "subject"
+      );
+
+      const fromUnitName = requireString(
+        payload.fromUnitName,
+        "fromUnitName"
+      );
+
+      const toUnitName = requireString(
+        payload.toUnitName,
+        "toUnitName"
+      );
+
+      return {
+        text: [
+          "Bir başvuru biriminize yönlendirildi.",
+          "",
+          `Başvuru konusu: ${petitionSubject}`,
+          `Takip kodu: ${trackingCode}`,
+          `Gönderen birim: ${fromUnitName}`,
+          `Hedef birim: ${toUnitName}`,
+          "",
+          "Başvurunun değerlendirme sürecine alınması gerekmektedir.",
+        ].join("\n"),
+      };
+    }
+
+    case "PETITION_CLOSED": {
+      if (
+        typeof payload.text === "string" &&
+        payload.text.trim()
+      ) {
+        return {
+          text: payload.text.trim(),
+          html: getOptionalHtml(payload),
+        };
+      }
+
+      const trackingCode = requireString(
+        payload.trackingCode,
+        "trackingCode"
+      );
+
+      const petitionSubject = requireString(
+        payload.subject,
+        "subject"
+      );
+
+      const reason = requireString(
+        payload.reason,
+        "reason"
+      );
+
+      return {
+        text: [
+          "Başvurunuz kapatılmıştır.",
+          "",
+          `Başvuru konusu: ${petitionSubject}`,
+          `Takip kodu: ${trackingCode}`,
+          "",
+          `Açıklama: ${reason}`,
+          "",
+          "Başvurunuzun güncel durumunu takip kodunuz ile görüntüleyebilirsiniz.",
+        ].join("\n"),
+      };
+    }
+
+    case "PETITION_REJECTED": {
+      if (
+        typeof payload.text === "string" &&
+        payload.text.trim()
+      ) {
+        return {
+          text: payload.text.trim(),
+          html: getOptionalHtml(payload),
+        };
+      }
+
+      const trackingCode = requireString(
+        payload.trackingCode,
+        "trackingCode"
+      );
+
+      const petitionSubject = requireString(
+        payload.subject,
+        "subject"
+      );
+
+      const reason = requireString(
+        payload.reason,
+        "reason"
+      );
+
+      return {
+        text: [
+          "Başvurunuz reddedilmiştir.",
+          "",
+          `Başvuru konusu: ${petitionSubject}`,
+          `Takip kodu: ${trackingCode}`,
+          "",
+          `Ret gerekçesi: ${reason}`,
+          "",
+          "Başvurunuzun güncel durumunu takip kodunuz ile görüntüleyebilirsiniz.",
+        ].join("\n"),
+      };
+    }
+
+   case "PETITION_ANSWERED": {
+  /*
+   * Eski/özel kayıtlar doğrudan text içeriyorsa
+   * onu kullanmaya devam ederiz.
+   */
+  if (
+    typeof payload.text === "string" &&
+    payload.text.trim()
+  ) {
+    return {
+      text: payload.text.trim(),
+      html: getOptionalHtml(payload),
+    };
+  }
+
+  const trackingCode = requireString(
+    payload.trackingCode,
+    "trackingCode"
+  );
+
+  const petitionSubject = requireString(
+    payload.subject,
+    "subject"
+  );
+
+  const isFinal =
+    payload.isFinal === true;
+
+  return {
+    text: [
+      isFinal
+        ? "Başvurunuza kurum tarafından nihai cevap verilmiştir."
+        : "Başvurunuza kurum tarafından yeni bir cevap eklenmiştir.",
+      "",
+      `Başvuru konusu: ${petitionSubject}`,
+      `Takip kodu: ${trackingCode}`,
+      "",
+      "Başvurunuzun güncel durumunu takip kodunuz ile görüntüleyebilirsiniz.",
+    ].join("\n"),
+  };
+}
 
     case "EMAIL_VERIFICATION":
       throw new Error(

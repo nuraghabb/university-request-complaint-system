@@ -132,17 +132,13 @@ export default function PersonelDashboardPage() {
       }
 
       if (!response.ok || !data.success || !data.petitions) {
-        setError(
-          data.error || "Başvurular alınamadı."
-        );
+        setError(data.error || "Başvurular alınamadı.");
         return;
       }
 
       setPetitions(data.petitions);
     } catch {
-      setError(
-        "Başvurular yüklenirken sunucuya ulaşılamadı."
-      );
+      setError("Başvurular yüklenirken sunucuya ulaşılamadı.");
     } finally {
       setPetitionsLoading(false);
     }
@@ -227,11 +223,9 @@ export default function PersonelDashboardPage() {
         (petition) => petition.status === "RECEIVED"
       ).length,
       processing: petitions.filter((petition) =>
-        [
-          "ASSIGNED",
-          "IN_REVIEW",
-          "FORWARDED",
-        ].includes(petition.status)
+        ["ASSIGNED", "IN_REVIEW", "FORWARDED"].includes(
+          petition.status
+        )
       ).length,
       completed: petitions.filter((petition) =>
         ["ANSWERED", "CLOSED"].includes(petition.status)
@@ -312,15 +306,27 @@ export default function PersonelDashboardPage() {
             }}
           >
             {user.role === "ADMIN" && (
-              <button
-                type="button"
-                className="btn btn-outline btn-sm"
-                onClick={() =>
-                  router.push("/dashboard/admin/categories")
-                }
-              >
-                Kategori Yönetimi
-              </button>
+              <>
+                <button
+                  type="button"
+                  className="btn btn-outline btn-sm"
+                  onClick={() =>
+                    router.push("/dashboard/admin/categories")
+                  }
+                >
+                  Kategori Yönetimi
+                </button>
+
+                <button
+                  type="button"
+                  className="btn btn-outline btn-sm"
+                  onClick={() =>
+                    router.push("/dashboard/admin/units")
+                  }
+                >
+                  Birim Yönetimi
+                </button>
+              </>
             )}
 
             <button
@@ -345,8 +351,7 @@ export default function PersonelDashboardPage() {
           <h1>Personel Yönetim Paneli</h1>
 
           <p>
-            Hoş geldiniz, {user.firstName}{" "}
-            {user.lastName}.
+            Hoş geldiniz, {user.firstName} {user.lastName}.
           </p>
         </div>
       </section>
@@ -362,10 +367,7 @@ export default function PersonelDashboardPage() {
           </div>
         )}
 
-        <div
-          className="card"
-          style={{ marginBottom: 24 }}
-        >
+        <div className="card" style={{ marginBottom: 24 }}>
           <div className="card-header">
             <span className="card-title">
               👤 Personel Bilgileri
@@ -386,10 +388,7 @@ export default function PersonelDashboardPage() {
                 value={`${user.firstName} ${user.lastName}`}
               />
 
-              <InfoItem
-                label="E-posta"
-                value={user.email}
-              />
+              <InfoItem label="E-posta" value={user.email} />
 
               <InfoItem
                 label="Yetki"
@@ -409,10 +408,7 @@ export default function PersonelDashboardPage() {
           </div>
         </div>
 
-        <div
-          className="stats-grid"
-          style={{ marginBottom: 24 }}
-        >
+        <div className="stats-grid" style={{ marginBottom: 24 }}>
           <StatCard
             icon="📥"
             value={stats.total}
@@ -449,9 +445,7 @@ export default function PersonelDashboardPage() {
               flexWrap: "wrap",
             }}
           >
-            <span className="card-title">
-              📄 Başvurular
-            </span>
+            <span className="card-title">📄 Başvurular</span>
 
             <button
               type="button"
@@ -459,9 +453,7 @@ export default function PersonelDashboardPage() {
               onClick={fetchPetitions}
               disabled={petitionsLoading}
             >
-              {petitionsLoading
-                ? "Yükleniyor..."
-                : "Yenile"}
+              {petitionsLoading ? "Yükleniyor..." : "Yenile"}
             </button>
           </div>
 
@@ -496,9 +488,7 @@ export default function PersonelDashboardPage() {
                   )
                 }
               >
-                <option value="ALL">
-                  Tüm durumlar
-                </option>
+                <option value="ALL">Tüm durumlar</option>
 
                 {Object.entries(STATUS_LABELS)
                   .filter(
@@ -573,8 +563,7 @@ export default function PersonelDashboardPage() {
                     fontSize: 13,
                   }}
                 >
-                  Seçilen ölçütlere uygun bir başvuru
-                  bulunmuyor.
+                  Seçilen ölçütlere uygun bir başvuru bulunmuyor.
                 </p>
               </div>
             ) : (
@@ -589,6 +578,11 @@ export default function PersonelDashboardPage() {
                   <PetitionCard
                     key={petition.id}
                     petition={petition}
+                    onOpen={() =>
+                      router.push(
+                        `/dashboard/personel/basvurular/${petition.id}`
+                      )
+                    }
                   />
                 ))}
               </div>
@@ -598,9 +592,8 @@ export default function PersonelDashboardPage() {
       </main>
 
       <footer className="footer">
-        <strong>Mersin Üniversitesi</strong> — Dilek
-        &amp; Öneri Sistemi ©{" "}
-        {new Date().getFullYear()}
+        <strong>Mersin Üniversitesi</strong> — Dilek &amp; Öneri
+        Sistemi © {new Date().getFullYear()}
       </footer>
     </div>
   );
@@ -608,16 +601,44 @@ export default function PersonelDashboardPage() {
 
 function PetitionCard({
   petition,
+  onOpen,
 }: {
   petition: Petition;
+  onOpen: () => void;
 }) {
   return (
     <article
+      role="button"
+      tabIndex={0}
+      onClick={onOpen}
+      onKeyDown={(event) => {
+        if (event.key === "Enter" || event.key === " ") {
+          event.preventDefault();
+          onOpen();
+        }
+      }}
       style={{
         padding: 16,
         border: "1px solid var(--border)",
         borderRadius: "var(--radius)",
         background: "var(--surface)",
+        cursor: "pointer",
+        transition:
+          "border-color 0.2s ease, box-shadow 0.2s ease, transform 0.2s ease",
+      }}
+      onMouseEnter={(event) => {
+        event.currentTarget.style.borderColor = "#2c5282";
+        event.currentTarget.style.boxShadow =
+          "0 8px 24px rgba(15, 23, 42, 0.08)";
+        event.currentTarget.style.transform =
+          "translateY(-1px)";
+      }}
+      onMouseLeave={(event) => {
+        event.currentTarget.style.borderColor =
+          "var(--border)";
+        event.currentTarget.style.boxShadow = "none";
+        event.currentTarget.style.transform =
+          "translateY(0)";
       }}
     >
       <div
@@ -723,7 +744,7 @@ function PetitionCard({
 
           <p
             style={{
-              margin: 0,
+              margin: "0 0 10px",
               color: "var(--text-muted)",
               fontSize: 12,
             }}
@@ -733,6 +754,17 @@ function PetitionCard({
               ? `${petition.assignedStaff.firstName} ${petition.assignedStaff.lastName}`
               : "Atanmadı"}
           </p>
+
+          <span
+            style={{
+              display: "inline-block",
+              color: "#2c5282",
+              fontSize: 12,
+              fontWeight: 700,
+            }}
+          >
+            Detayı Aç →
+          </span>
         </div>
       </div>
     </article>
