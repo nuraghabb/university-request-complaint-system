@@ -100,7 +100,7 @@ export default function AdminUnitsPage() {
           !authData.success ||
           !authData.user
         ) {
-          router.replace("/personel-giris");
+          router.replace("/giris");
           return;
         }
 
@@ -214,7 +214,7 @@ export default function AdminUnitsPage() {
       if (!response.ok || !data.success) {
         throw new Error(
           data.error ??
-            "Birim kaydedilirken hata oluştu."
+          "Birim kaydedilirken hata oluştu."
         );
       }
 
@@ -262,7 +262,7 @@ export default function AdminUnitsPage() {
       if (!response.ok || !data.success) {
         throw new Error(
           data.error ??
-            "Birim durumu güncellenemedi."
+          "Birim durumu güncellenemedi."
         );
       }
 
@@ -522,11 +522,10 @@ export default function AdminUnitsPage() {
                         </span>
 
                         <span
-                          className={`rounded-full px-3 py-1 text-xs font-semibold ${
-                            unit.isActive
+                          className={`rounded-full px-3 py-1 text-xs font-semibold ${unit.isActive
                               ? "bg-green-100 text-green-700"
                               : "bg-slate-200 text-slate-600"
-                          }`}
+                            }`}
                         >
                           {unit.isActive
                             ? "Aktif"

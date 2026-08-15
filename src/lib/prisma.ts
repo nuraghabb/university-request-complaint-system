@@ -37,6 +37,8 @@ function getPrismaClient(): PrismaClient {
   return client;
 }
 
+export { getPrismaClient };
+
 /**
  * Prisma bağlantısını yalnızca gerçekten kullanıldığı anda oluşturur.
  *

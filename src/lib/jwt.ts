@@ -1,11 +1,13 @@
 import jwt from "jsonwebtoken";
 
 export interface JWTPayload {
-  staffUserId: number;
+  id?: number | string;
+  staffUserId?: number;
   email: string;
-  role: "ADMIN" | "UNIT_MANAGER" | "UNIT_STAFF";
-  firstName: string;
-  lastName: string;
+  role: "ADMIN" | "UNIT_MANAGER" | "UNIT_STAFF" | "STUDENT" | "ACADEMIC";
+  firstName?: string;
+  lastName?: string;
+  type?: "STAFF" | "INTERNAL_USER";
 }
 
 function getJwtSecret(): string {

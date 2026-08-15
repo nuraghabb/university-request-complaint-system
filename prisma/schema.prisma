@@ -12,6 +12,11 @@ enum StaffRole {
   UNIT_STAFF
 }
 
+enum InternalUserRole {
+  STUDENT
+  ACADEMIC
+}
+
 enum PetitionStatus {
   EMAIL_PENDING
   RECEIVED
@@ -103,6 +108,30 @@ model StaffUser {
   @@map("staff_users")
 }
 
+model InternalUser {
+  id           Int               @id @default(autoincrement())
+  firstName    String            @db.VarChar(100)
+  lastName     String            @db.VarChar(100)
+  email        String            @unique @db.VarChar(255)
+  passwordHash String            @db.VarChar(255)
+  role         InternalUserRole
+
+  studentNumber  String?  @db.VarChar(20)
+  academicTitle  String?  @db.VarChar(100)
+  department     String?  @db.VarChar(200)
+
+  isActive    Boolean   @default(true)
+  lastLoginAt DateTime?
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  petitions Petition[]
+
+  @@index([role, isActive])
+  @@index([email])
+  @@map("internal_users")
+}
+
 model Unit {
   id          Int      @id @default(autoincrement())
   code        String   @unique @db.VarChar(50)
@@ -145,6 +174,13 @@ model Petition {
   applicantLastName  String  @db.VarChar(100)
   applicantEmail     String  @db.VarChar(255)
   applicantPhone     String? @db.VarChar(20)
+
+  // İç kullanıcı (öğrenci/akademisyen) oturumuyla oluşturulan başvurular.
+  internalUserId Int?
+  internalUser   InternalUser? @relation(fields: [internalUserId], references: [id], onDelete: SetNull)
+
+  // Otomatik rol etiketi: İÇ/ÖĞRENCİ, İÇ/AKADEMİK, DIŞ/VATANDAŞ
+  applicantRoleTag String? @db.VarChar(30)
 
   // T.C. kimlik numarası ve doğum yılı veritabanında tutulmaz.
   identityVerifiedAt DateTime
@@ -190,6 +226,7 @@ model Petition {
   @@index([targetUnitId, status])
   @@index([assignedStaffId, status])
   @@index([applicantEmail])
+  @@index([internalUserId])
   @@index([emailVerifiedAt])
   @@index([createdAt])
   @@map("petitions")

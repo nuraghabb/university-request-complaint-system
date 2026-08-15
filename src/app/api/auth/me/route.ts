@@ -41,6 +41,56 @@ export async function GET(request: NextRequest) {
       return response;
     }
 
+    // İç kullanıcı (öğrenci/akademisyen) token'ı mı kontrol et
+    if (payload.type === "INTERNAL_USER") {
+      const internalUser = await prisma.internalUser.findUnique({
+        where: {
+          id: parseInt(payload.id as string),
+        },
+        select: {
+          id: true,
+          firstName: true,
+          lastName: true,
+          email: true,
+          role: true,
+          isActive: true,
+        },
+      });
+
+      if (!internalUser || !internalUser.isActive) {
+        const response = NextResponse.json(
+          {
+            success: false,
+            user: null,
+            error: "Kullanıcı hesabı bulunamadı veya pasif durumda.",
+          },
+          { status: 401 }
+        );
+
+        response.cookies.set("auth_token", "", {
+          httpOnly: true,
+          secure: process.env.NODE_ENV === "production",
+          sameSite: "lax",
+          expires: new Date(0),
+          path: "/",
+        });
+
+        return response;
+      }
+
+      return NextResponse.json({
+        success: true,
+        user: {
+          id: internalUser.id,
+          firstName: internalUser.firstName,
+          lastName: internalUser.lastName,
+          email: internalUser.email,
+          role: internalUser.role,
+        },
+      });
+    }
+
+    // Personel (staff) token'ı
     const staffUser = await prisma.staffUser.findUnique({
       where: {
         id: payload.staffUserId,

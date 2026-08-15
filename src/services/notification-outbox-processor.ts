@@ -7,6 +7,7 @@ import type {
 
 import { prisma } from "@/lib/prisma";
 import { deliverEmail } from "@/services/email-delivery";
+import { sendEmail, emailTemplates } from "@/services/email-service";
 
 const DEFAULT_BATCH_SIZE = 10;
 const MAX_BATCH_SIZE = 50;
@@ -50,7 +51,7 @@ interface NotificationPayload {
   isFinal?: unknown;
   text?: unknown;
   html?: unknown;
- 
+
 }
 
 function normalizeBatchSize(
@@ -115,7 +116,7 @@ function getOptionalHtml(
 ): string | undefined {
   return (
     typeof payload.html === "string" &&
-    payload.html.trim()
+      payload.html.trim()
       ? payload.html.trim()
       : undefined
   );
@@ -318,47 +319,47 @@ function buildEmailContent(
       };
     }
 
-   case "PETITION_ANSWERED": {
-  /*
-   * Eski/özel kayıtlar doğrudan text içeriyorsa
-   * onu kullanmaya devam ederiz.
-   */
-  if (
-    typeof payload.text === "string" &&
-    payload.text.trim()
-  ) {
-    return {
-      text: payload.text.trim(),
-      html: getOptionalHtml(payload),
-    };
-  }
+    case "PETITION_ANSWERED": {
+      /*
+       * Eski/özel kayıtlar doğrudan text içeriyorsa
+       * onu kullanmaya devam ederiz.
+       */
+      if (
+        typeof payload.text === "string" &&
+        payload.text.trim()
+      ) {
+        return {
+          text: payload.text.trim(),
+          html: getOptionalHtml(payload),
+        };
+      }
 
-  const trackingCode = requireString(
-    payload.trackingCode,
-    "trackingCode"
-  );
+      const trackingCode = requireString(
+        payload.trackingCode,
+        "trackingCode"
+      );
 
-  const petitionSubject = requireString(
-    payload.subject,
-    "subject"
-  );
+      const petitionSubject = requireString(
+        payload.subject,
+        "subject"
+      );
 
-  const isFinal =
-    payload.isFinal === true;
+      const isFinal =
+        payload.isFinal === true;
 
-  return {
-    text: [
-      isFinal
-        ? "Başvurunuza kurum tarafından nihai cevap verilmiştir."
-        : "Başvurunuza kurum tarafından yeni bir cevap eklenmiştir.",
-      "",
-      `Başvuru konusu: ${petitionSubject}`,
-      `Takip kodu: ${trackingCode}`,
-      "",
-      "Başvurunuzun güncel durumunu takip kodunuz ile görüntüleyebilirsiniz.",
-    ].join("\n"),
-  };
-}
+      return {
+        text: [
+          isFinal
+            ? "Başvurunuza kurum tarafından nihai cevap verilmiştir."
+            : "Başvurunuza kurum tarafından yeni bir cevap eklenmiştir.",
+          "",
+          `Başvuru konusu: ${petitionSubject}`,
+          `Takip kodu: ${trackingCode}`,
+          "",
+          "Başvurunuzun güncel durumunu takip kodunuz ile görüntüleyebilirsiniz.",
+        ].join("\n"),
+      };
+    }
 
     case "EMAIL_VERIFICATION":
       throw new Error(
@@ -382,10 +383,10 @@ function calculateNextAvailableAt(
 
   return new Date(
     Date.now() +
-      RETRY_DELAY_MINUTES *
-        multiplier *
-        60 *
-        1000
+    RETRY_DELAY_MINUTES *
+    multiplier *
+    60 *
+    1000
   );
 }
 
@@ -414,9 +415,9 @@ function createSuccessMetadata(input: {
     attemptCount: input.attemptCount,
     ...(input.providerMessageId
       ? {
-          providerMessageId:
-            input.providerMessageId,
-        }
+        providerMessageId:
+          input.providerMessageId,
+      }
       : {}),
   };
 }
@@ -424,9 +425,9 @@ function createSuccessMetadata(input: {
 async function recoverStuckNotifications(): Promise<number> {
   const timeoutDate = new Date(
     Date.now() -
-      PROCESSING_TIMEOUT_MINUTES *
-        60 *
-        1000
+    PROCESSING_TIMEOUT_MINUTES *
+    60 *
+    1000
   );
 
   const recovered =
@@ -571,8 +572,8 @@ export async function processNotificationOutbox(
                 reachedMaximumAttempts
                   ? new Date()
                   : calculateNextAvailableAt(
-                      nextAttemptCount
-                    ),
+                    nextAttemptCount
+                  ),
             },
           }),
 
@@ -667,8 +668,8 @@ export async function processNotificationOutbox(
               reachedMaximumAttempts
                 ? new Date()
                 : calculateNextAvailableAt(
-                    nextAttemptCount
-                  ),
+                  nextAttemptCount
+                ),
           },
         }),
 

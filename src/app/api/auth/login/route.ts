@@ -3,13 +3,25 @@ import bcrypt from "bcryptjs";
 
 import { prisma } from "@/lib/prisma";
 import { signToken } from "@/lib/jwt";
+import { logStaffLogin } from "@/lib/audit";
 
 interface LoginRequestBody {
   email?: unknown;
   password?: unknown;
 }
 
+function getClientIp(req: NextRequest): string {
+  return (
+    req.headers.get("x-forwarded-for")?.split(",")[0].trim() ||
+    req.headers.get("x-real-ip") ||
+    "unknown"
+  );
+}
+
 export async function POST(request: NextRequest) {
+  const ipAddress = getClientIp(request);
+  const userAgent = request.headers.get("user-agent") || undefined;
+
   try {
     const body = (await request.json()) as LoginRequestBody;
 
@@ -89,6 +101,9 @@ export async function POST(request: NextRequest) {
         { status: 401 }
       );
     }
+
+    // Log successful login
+    await logStaffLogin(staffUser.id, staffUser.email, ipAddress, userAgent);
 
     const token = signToken({
       staffUserId: staffUser.id,

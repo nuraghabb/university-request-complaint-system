@@ -98,6 +98,43 @@ export interface CreatePetitionSuccessResponse {
   verificationRequired: true;
 }
 
+export interface AuthenticatedCreatePetitionRequest {
+  phone?: string;
+  category: string;
+  targetUnitCode: string;
+  subject: string;
+  content: string;
+  privacyNoticeVersion: string;
+  privacyNoticeAcknowledged: boolean;
+}
+
+export interface AuthenticatedCreatePetitionSuccessResponse {
+  success: true;
+  message: string;
+  verificationRequired: false;
+  trackingCode: string;
+}
+
+export interface AuthenticatedUserProfile {
+  id: number;
+  firstName: string;
+  lastName: string;
+  email: string;
+  role: "STUDENT" | "ACADEMIC";
+  studentNumber?: string | null;
+  academicTitle?: string | null;
+  department?: string | null;
+}
+
+export interface AuthenticatedPetitionFormData {
+  phone: string;
+  category: string;
+  targetUnitCode: string;
+  subject: string;
+  content: string;
+  privacyNoticeAcknowledged: boolean;
+}
+
 export interface ApiErrorResponse {
   success: false;
   error: string;

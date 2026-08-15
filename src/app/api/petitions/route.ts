@@ -1,7 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
 
+import { getApplicantRoleTag } from "@/lib/applicant-tag";
+import { getSessionFromRequest } from "@/lib/auth";
 import { generateTrackingCode } from "@/lib/constants";
-import { verifyToken } from "@/lib/jwt";
 import { prisma } from "@/lib/prisma";
 import { verifyCaptcha } from "@/services/captcha-verification";
 import { deliverEmail } from "@/services/email-delivery";
@@ -138,13 +139,13 @@ async function createUniqueTrackingCode(): Promise<string> {
 }
 
 /**
- * Yetkili kurum personeli için e-postası doğrulanmış
- * başvuruların listesini getirir.
+ * Yetkili kurum personeli veya oturum açmış iç kullanıcılar
+ * için başvuru listesini getirir.
  */
 export async function GET(request: NextRequest) {
-  const token = request.cookies.get("auth_token")?.value;
+  const session = await getSessionFromRequest(request);
 
-  if (!token) {
+  if (!session) {
     return NextResponse.json(
       {
         success: false,
@@ -154,40 +155,56 @@ export async function GET(request: NextRequest) {
     );
   }
 
-  const payload = verifyToken(token);
-
-  if (!payload) {
-    return NextResponse.json(
-      {
-        success: false,
-        error: "Geçersiz veya süresi dolmuş oturum.",
-      },
-      { status: 401 }
-    );
-  }
-
   try {
-    const staffUser = await prisma.staffUser.findUnique({
-      where: {
-        id: payload.staffUserId,
-      },
-      select: {
-        id: true,
-        role: true,
-        unitId: true,
-        isActive: true,
-      },
-    });
+    if (session.type === "INTERNAL") {
+      const internalUser = session.user;
 
-    if (!staffUser || !staffUser.isActive) {
-      return NextResponse.json(
-        {
-          success: false,
-          error: "Yetkili personel hesabı bulunamadı.",
+      const petitions = await prisma.petition.findMany({
+        where: {
+          OR: [
+            { internalUserId: internalUser.id },
+            { applicantEmail: internalUser.email },
+          ],
         },
-        { status: 403 }
-      );
+        select: {
+          id: true,
+          trackingCode: true,
+          applicantFirstName: true,
+          applicantLastName: true,
+          applicantRoleTag: true,
+          category: {
+            select: {
+              id: true,
+              code: true,
+              name: true,
+            },
+          },
+          status: true,
+          priority: true,
+          subject: true,
+          emailVerifiedAt: true,
+          createdAt: true,
+          updatedAt: true,
+          targetUnit: {
+            select: {
+              id: true,
+              code: true,
+              name: true,
+            },
+          },
+        },
+        orderBy: {
+          createdAt: "desc",
+        },
+      });
+
+      return NextResponse.json({
+        success: true,
+        petitions,
+      });
     }
+
+    const staffUser = session.user;
 
     const petitions = await prisma.petition.findMany({
       where:
@@ -214,6 +231,7 @@ export async function GET(request: NextRequest) {
         trackingCode: true,
         applicantFirstName: true,
         applicantLastName: true,
+        applicantRoleTag: true,
         category: {
           select: {
             id: true,
@@ -508,6 +526,7 @@ export async function POST(request: NextRequest) {
               content,
               status: "EMAIL_PENDING",
               priority: "NORMAL",
+              applicantRoleTag: getApplicantRoleTag("CITIZEN"),
             },
             select: {
               id: true,

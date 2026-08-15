@@ -1,7 +1,9 @@
 "use client";
 
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
+
+import LandingPage from "./_landing";
 
 interface SessionResponse {
   success?: boolean;
@@ -10,12 +12,21 @@ interface SessionResponse {
     firstName: string;
     lastName: string;
     email: string;
-    role: "ADMIN" | "UNIT_MANAGER" | "UNIT_STAFF";
+    role: "ADMIN" | "UNIT_MANAGER" | "UNIT_STAFF" | "STUDENT" | "ACADEMIC";
   } | null;
+}
+
+function getDashboardPath(
+  role: SessionResponse["user"] extends infer U ? U extends { role: infer R } ? R : never : never
+): string {
+  if (role === "STUDENT") return "/dashboard/ogrenci";
+  if (role === "ACADEMIC") return "/dashboard/akademik";
+  return "/dashboard/personel";
 }
 
 export default function HomePage() {
   const router = useRouter();
+  const [checkingSession, setCheckingSession] = useState(true);
 
   useEffect(() => {
     let isMounted = true;
@@ -35,53 +46,51 @@ export default function HomePage() {
         }
 
         if (response.ok && data.user) {
-          router.replace("/dashboard/personel");
+          router.replace(getDashboardPath(data.user.role));
           return;
         }
-
-        router.replace("/basvuru-misafir");
       } catch {
+        // oturum kontrolü başarısızsa landing sayfası gösterilir
+      } finally {
         if (isMounted) {
-          router.replace("/basvuru-misafir");
+          setCheckingSession(false);
         }
       }
     }
 
-    redirectUser();
+    void redirectUser();
 
     return () => {
       isMounted = false;
     };
   }, [router]);
 
-  return (
-    <main
-      style={{
-        minHeight: "100vh",
-        display: "flex",
-        alignItems: "center",
-        justifyContent: "center",
-        background: "var(--primary)",
-      }}
-    >
-      <div
+  if (checkingSession) {
+    return (
+      <main
         style={{
-          color: "#fff",
-          textAlign: "center",
+          minHeight: "100vh",
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+          background: "var(--primary)",
         }}
       >
-        <div
-          className="spinner"
-          style={{
-            width: 40,
-            height: 40,
-            borderWidth: 3,
-            margin: "0 auto 16px",
-          }}
-        />
+        <div style={{ color: "#fff", textAlign: "center" }}>
+          <div
+            className="spinner"
+            style={{
+              width: 40,
+              height: 40,
+              borderWidth: 3,
+              margin: "0 auto 16px",
+            }}
+          />
+          <p>Yönlendiriliyor...</p>
+        </div>
+      </main>
+    );
+  }
 
-        <p>Yönlendiriliyor...</p>
-      </div>
-    </main>
-  );
+  return <LandingPage />;
 }
