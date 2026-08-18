@@ -1,5 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 
+import { Prisma } from "@prisma/client";
+
 import { getApplicantRoleTag } from "@/lib/applicant-tag";
 import { getSessionFromRequest } from "@/lib/auth";
 import { generateTrackingCode } from "@/lib/constants";
@@ -91,24 +93,32 @@ async function createUniqueTrackingCode(): Promise<string> {
 }
 
 /**
- * Oturum açmış öğrenci/akademisyen için başvuru oluşturur.
+ * Oturum açmış öğrenci/akademisyen/personel için başvuru oluşturur.
  * Kimlik ve e-posta doğrulaması atlanır; başvuru doğrudan RECEIVED durumuna geçer.
+ * Başvuru sahibi bilgileri oturumdaki hesaptan alınır.
  */
 export async function POST(request: NextRequest) {
   const requestInformation = getRequestInformation(request);
   const session = await getSessionFromRequest(request);
 
-  if (!session || session.type !== "INTERNAL") {
+  if (!session) {
     return NextResponse.json(
       {
         success: false,
-        error: "Bu işlem için öğrenci veya akademisyen oturumu gereklidir.",
+        error: "Bu işlem için giriş yapmanız gereklidir.",
       },
       { status: 401 }
     );
   }
 
-  const internalUser = session.user;
+  const isStaffSession = session.type === "STAFF";
+  const applicantFirstName = session.user.firstName;
+  const applicantLastName = session.user.lastName;
+  const applicantEmail = session.user.email;
+  const applicantRoleTag = isStaffSession
+    ? getApplicantRoleTag("STAFF")
+    : getApplicantRoleTag(session.user.role);
+  const internalUserId = isStaffSession ? null : session.user.id;
 
   try {
     const body: unknown = await request.json();
@@ -202,32 +212,33 @@ export async function POST(request: NextRequest) {
     );
 
     const trackingCode = await createUniqueTrackingCode();
-    const applicantRoleTag = getApplicantRoleTag(internalUser.role);
     const now = new Date();
 
     const petition = await prisma.$transaction(async (transaction) => {
+      const petitionData: Prisma.PetitionUncheckedCreateInput = {
+        trackingCode,
+        applicantFirstName,
+        applicantLastName,
+        applicantEmail,
+        applicantPhone: phone,
+        internalUserId,
+        applicantRoleTag,
+        identityVerifiedAt: now,
+        botCheckVerifiedAt: now,
+        privacyNoticeVersion,
+        privacyNoticeAcknowledgedAt: now,
+        emailVerifiedAt: now,
+        categoryId: selectedCategory.id,
+        targetUnitId: targetUnit.id,
+        subject,
+        content,
+        status: "RECEIVED",
+        priority,
+        dueAt,
+      };
+
       const createdPetition = await transaction.petition.create({
-        data: {
-          trackingCode,
-          applicantFirstName: internalUser.firstName,
-          applicantLastName: internalUser.lastName,
-          applicantEmail: internalUser.email,
-          applicantPhone: phone,
-          internalUserId: internalUser.id,
-          applicantRoleTag,
-          identityVerifiedAt: now,
-          botCheckVerifiedAt: now,
-          privacyNoticeVersion,
-          privacyNoticeAcknowledgedAt: now,
-          emailVerifiedAt: now,
-          categoryId: selectedCategory.id,
-          targetUnitId: targetUnit.id,
-          subject,
-          content,
-          status: "RECEIVED",
-          priority,
-          dueAt,
-        },
+        data: petitionData,
         select: {
           id: true,
           trackingCode: true,
@@ -247,10 +258,10 @@ export async function POST(request: NextRequest) {
         data: {
           petitionId: createdPetition.id,
           type: "PETITION_RECEIVED",
-          recipientEmail: internalUser.email,
+          recipientEmail: applicantEmail,
           subject: "Mersin Üniversitesi Başvurunuz Alındı",
           payload: {
-            applicantName: `${internalUser.firstName} ${internalUser.lastName}`,
+            applicantName: `${applicantFirstName} ${applicantLastName}`,
             trackingCode: createdPetition.trackingCode,
             status: "RECEIVED",
           },
@@ -272,7 +283,9 @@ export async function POST(request: NextRequest) {
             targetUnitId: targetUnit.id,
             status: "RECEIVED",
             applicantRoleTag,
-            internalUserId: internalUser.id,
+            ...(internalUserId !== null
+              ? { internalUserId }
+              : { applicantEmail }),
           },
           ipAddress: requestInformation.ipAddress,
           userAgent: requestInformation.userAgent,

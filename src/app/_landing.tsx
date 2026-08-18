@@ -2,122 +2,153 @@
 
 import Link from "next/link";
 
+const QUICK_ACTIONS = [
+  {
+    href: "/basvuru-misafir",
+    icon: "📝",
+    title: "Başvuru Oluştur",
+    description:
+      "Kayıt olmadan dilek, öneri, şikâyet veya bilgi edinme başvurusu yapın.",
+  },
+  {
+    href: "/basvuru-takip",
+    icon: "📍",
+    title: "Başvuru Takibi",
+    description:
+      "Takip kodunuz ve e-posta adresinizle başvurunuzun güncel durumunu görüntüleyin.",
+  },
+];
+
+const LOGIN_ACTIONS = [
+  {
+    href: "/giris",
+    icon: "🔐",
+    title: "Personel Girişi",
+    description: "Yetkili kurum personeli için giriş ekranı.",
+  },
+  {
+    href: "/ogrenci-akademisyen-giris",
+    icon: "🎓",
+    title: "Öğrenci / Akademisyen",
+    description: "Öğrenci ve akademisyenler için giriş ekranı.",
+  },
+];
+
+const FEATURES = [
+  {
+    icon: "⚡",
+    title: "Hızlı Başvuru",
+    description:
+      "Kayıt oluşturmadan birkaç adımda başvurunuzu iletebilirsiniz.",
+  },
+  {
+    icon: "🔎",
+    title: "Şeffaf Takip",
+    description:
+      "Başvurunuzun durumunu takip kodu ile istediğiniz zaman sorgulayın.",
+  },
+  {
+    icon: "🏢",
+    title: "Doğru Birim",
+    description:
+      "Başvurular ilgili birime yönlendirilir ve ilgili personel tarafından işleme alınır.",
+  },
+  {
+    icon: "🛡️",
+    title: "Güvenli Süreç",
+    description:
+      "Kimlik doğrulama ve e-posta onayı ile başvuru süreciniz güvence altındadır.",
+  },
+];
+
 export default function LandingPage() {
-    return (
-        <main
-            style={{
-                minHeight: "100vh",
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "center",
-                background: "linear-gradient(135deg, #123b7a 0%, #1a5bb8 100%)",
-                padding: 24,
-            }}
-        >
-            <div
-                style={{
-                    width: "100%",
-                    maxWidth: 720,
-                    background: "rgba(255,255,255,0.08)",
-                    border: "1px solid rgba(255,255,255,0.15)",
-                    borderRadius: 20,
-                    padding: 32,
-                    color: "#fff",
-                    boxShadow: "0 20px 60px rgba(0,0,0,0.25)",
-                }}
+  return (
+    <main className="landing-page">
+      <section className="landing-hero">
+        <div className="landing-hero-inner">
+          <img
+            src="/uni_logo.gif"
+            alt="Mersin Üniversitesi"
+            className="landing-logo-img"
+          />
+
+          <p className="landing-eyebrow">Mersin Üniversitesi</p>
+
+          <h1 className="landing-title">
+            Dilek, Öneri ve Başvuru Yönetim Sistemi
+          </h1>
+
+          <p className="landing-subtitle">
+            Taleplerinizi, önerilerinizi ve şikâyetlerinizi ilgili
+            birimlere kolayca iletin; sürecin her adımını şeffaf bir
+            şekilde takip edin.
+          </p>
+
+          <div className="landing-cta">
+            <Link href="/basvuru-misafir" className="btn btn-accent btn-lg">
+              📝 Başvuru Oluştur
+            </Link>
+
+            <Link href="/basvuru-takip" className="btn btn-hero-ghost btn-lg">
+              📍 Başvuru Takip Et
+            </Link>
+          </div>
+        </div>
+      </section>
+
+      <section className="main-content landing-content">
+        <div className="landing-grid landing-grid-two">
+          {QUICK_ACTIONS.map((action) => (
+            <Link
+              key={action.href}
+              href={action.href}
+              className="landing-card"
             >
-                <div style={{ textAlign: "center", marginBottom: 28 }}>
-                    <div style={{ fontSize: 56, marginBottom: 12 }}>🏛️</div>
-                    <h1 style={{ margin: 0, fontSize: 30, fontWeight: 700 }}>
-                        Mersin Üniversitesi
-                    </h1>
-                    <p style={{ margin: "10px 0 0", opacity: 0.9, fontSize: 18 }}>
-                        Dilek, Öneri ve Başvuru Yönetim Sistemi
-                    </p>
-                </div>
+              <div className="landing-card-icon">{action.icon}</div>
+              <h2 className="landing-card-title">{action.title}</h2>
+              <p className="landing-card-desc">{action.description}</p>
+              <span className="landing-card-link">
+                Devam et →
+              </span>
+            </Link>
+          ))}
+        </div>
 
-                <div
-                    style={{
-                        display: "grid",
-                        gridTemplateColumns: "repeat(auto-fit, minmax(220px, 1fr))",
-                        gap: 16,
-                    }}
-                >
-                    <Link
-                        href="/giris"
-                        style={{
-                            display: "flex",
-                            alignItems: "center",
-                            justifyContent: "center",
-                            minHeight: 96,
-                            textDecoration: "none",
-                            borderRadius: 16,
-                            background: "#fff",
-                            color: "#123b7a",
-                            fontWeight: 700,
-                            fontSize: 18,
-                        }}
-                    >
-                        🔐 Personel Girişi
-                    </Link>
+        <div className="divider" />
 
-                    <Link
-                        href="/ogrenci-akademisyen-giris"
-                        style={{
-                            display: "flex",
-                            alignItems: "center",
-                            justifyContent: "center",
-                            minHeight: 96,
-                            textDecoration: "none",
-                            borderRadius: 16,
-                            background: "#fff",
-                            color: "#123b7a",
-                            fontWeight: 700,
-                            fontSize: 18,
-                        }}
-                    >
-                        👨‍🎓 Öğrenci/Akademisyen
-                    </Link>
+        <h2 className="section-title">Kullanıcı Girişleri</h2>
 
-                    <Link
-                        href="/basvuru-misafir"
-                        style={{
-                            display: "flex",
-                            alignItems: "center",
-                            justifyContent: "center",
-                            minHeight: 96,
-                            textDecoration: "none",
-                            borderRadius: 16,
-                            background: "rgba(255,255,255,0.12)",
-                            color: "#fff",
-                            fontWeight: 700,
-                            fontSize: 18,
-                            border: "1px solid rgba(255,255,255,0.2)",
-                        }}
-                    >
-                        📝 Başvuru Oluştur
-                    </Link>
+        <div className="landing-grid landing-grid-two">
+          {LOGIN_ACTIONS.map((action) => (
+            <Link
+              key={action.href}
+              href={action.href}
+              className="landing-card"
+            >
+              <div className="landing-card-icon">{action.icon}</div>
+              <h2 className="landing-card-title">{action.title}</h2>
+              <p className="landing-card-desc">{action.description}</p>
+              <span className="landing-card-link">
+                Giriş yap →
+              </span>
+            </Link>
+          ))}
+        </div>
 
-                    <Link
-                        href="/basvuru-takip"
-                        style={{
-                            display: "flex",
-                            alignItems: "center",
-                            justifyContent: "center",
-                            minHeight: 96,
-                            textDecoration: "none",
-                            borderRadius: 16,
-                            background: "rgba(255,255,255,0.08)",
-                            color: "#fff",
-                            fontWeight: 700,
-                            fontSize: 18,
-                            border: "1px solid rgba(255,255,255,0.2)",
-                        }}
-                    >
-                        📍 Başvuru Takibi
-                    </Link>
-                </div>
+        <div className="divider" />
+
+        <h2 className="section-title">Neden Bu Sistem?</h2>
+
+        <div className="landing-grid landing-grid-four">
+          {FEATURES.map((feature) => (
+            <div key={feature.title} className="feature-card">
+              <div className="feature-icon">{feature.icon}</div>
+              <h3 className="feature-title">{feature.title}</h3>
+              <p className="feature-desc">{feature.description}</p>
             </div>
-        </main>
-    );
+          ))}
+        </div>
+      </section>
+    </main>
+  );
 }

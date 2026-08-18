@@ -50,6 +50,17 @@ export default function InternalUserLoginPage() {
         <div style={styles.container}>
             <div style={styles.card}>
                 <div style={styles.header}>
+                    <img
+                        src="/uni_logo.gif"
+                        alt="Mersin Üniversitesi"
+                        style={{
+                            width: 64,
+                            height: 64,
+                            objectFit: "contain",
+                            display: "block",
+                            margin: "0 auto 10px",
+                        }}
+                    />
                     <h1 style={styles.title}>Öğrenci / Akademisyen Girişi</h1>
                     <p style={styles.subtitle}>
                         Mersin Üniversitesi Dilekçe Yönetim Sistemi

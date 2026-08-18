@@ -1,6 +1,7 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
 
 import NewPetitionForm from "@/components/NewPetitionForm";
 
@@ -10,9 +11,80 @@ interface PetitionSuccessData {
 }
 
 export default function GuestPage() {
+  const router = useRouter();
+  const [checkingSession, setCheckingSession] = useState(true);
   const [showForm, setShowForm] = useState(false);
   const [successData, setSuccessData] =
     useState<PetitionSuccessData | null>(null);
+
+  useEffect(() => {
+    let isMounted = true;
+
+    async function checkSession() {
+      try {
+        const response = await fetch("/api/auth/me", {
+          credentials: "include",
+          cache: "no-store",
+        });
+
+        if (response.ok) {
+          const data = (await response.json()) as {
+            success: boolean;
+            user?: { id: number; role: string } | null;
+          };
+
+          if (data.success && data.user) {
+            router.replace("/dashboard/basvuru-olustur");
+            return;
+          }
+        }
+      } catch {
+        // oturum kontrolü başarısızsa misafir akışı gösterilir
+      } finally {
+        if (isMounted) {
+          setCheckingSession(false);
+        }
+      }
+    }
+
+    void checkSession();
+
+    return () => {
+      isMounted = false;
+    };
+  }, [router]);
+
+  if (checkingSession) {
+    return (
+      <div
+        className="login-page"
+        style={{
+          alignItems: "flex-start",
+          paddingTop: 120,
+        }}
+      >
+        <div
+          style={{
+            width: "100%",
+            maxWidth: 640,
+            margin: "0 auto",
+            textAlign: "center",
+            color: "#fff",
+          }}
+        >
+          <div
+            className="spinner"
+            style={{
+              width: 40,
+              height: 40,
+              margin: "0 auto 16px",
+            }}
+          />
+          <p>Yönlendiriliyor...</p>
+        </div>
+      </div>
+    );
+  }
 
   function handleSuccess(
     message: string,
@@ -52,14 +124,17 @@ export default function GuestPage() {
             marginBottom: 32,
           }}
         >
-          <div
+          <img
+            src="/uni_logo.gif"
+            alt="Mersin Üniversitesi"
             style={{
-              fontSize: 56,
-              marginBottom: 12,
+              width: 72,
+              height: 72,
+              objectFit: "contain",
+              margin: "0 auto 12px",
+              display: "block",
             }}
-          >
-            🏛️
-          </div>
+          />
 
           <h1
             style={{

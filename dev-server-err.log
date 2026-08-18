@@ -1,0 +1,1600 @@
+[browser] Detected `scroll-behavior: smooth` on the `<html>` element. To disable smooth scrolling during route transitions, add `data-scroll-behavior="smooth"` to your <html> element. Learn more: https://nextjs.org/docs/messages/missing-data-scroll-behavior
+[browser] Detected `scroll-behavior: smooth` on the `<html>` element. To disable smooth scrolling during route transitions, add `data-scroll-behavior="smooth"` to your <html> element. Learn more: https://nextjs.org/docs/messages/missing-data-scroll-behavior
+[browser] Detected `scroll-behavior: smooth` on the `<html>` element. To disable smooth scrolling during route transitions, add `data-scroll-behavior="smooth"` to your <html> element. Learn more: https://nextjs.org/docs/messages/missing-data-scroll-behavior
+[browser] Detected `scroll-behavior: smooth` on the `<html>` element. To disable smooth scrolling during route transitions, add `data-scroll-behavior="smooth"` to your <html> element. Learn more: https://nextjs.org/docs/messages/missing-data-scroll-behavior
+⚠ Fast Refresh had to perform a full reload due to a runtime error.
+[browser] Detected `scroll-behavior: smooth` on the `<html>` element. To disable smooth scrolling during route transitions, add `data-scroll-behavior="smooth"` to your <html> element. Learn more: https://nextjs.org/docs/messages/missing-data-scroll-behavior
+[browser] Uncaught Error: ./src/app/dashboard/personel/page.tsx:818:2
+Expected '}', got '<eof>'
+  816 |     timeStyle: "short",
+  817 |   }).format(new Date(value));
+> 818 | }
+      |  ^
+
+Parsing ecmascript source code failed
+
+Import traces:
+  Client Component Browser:
+    ./src/app/dashboard/personel/page.tsx [Client Component Browser]
+    ./src/app/dashboard/personel/page.tsx [Server Component]
+
+  Client Component SSR:
+    ./src/app/dashboard/personel/page.tsx [Client Component SSR]
+    ./src/app/dashboard/personel/page.tsx [Server Component]
+
+
+    at <unknown> (Error: ./src/app/dashboard/personel/page.tsx:818:2)
+    at <unknown> (Error: (./src/app/dashboard/personel/page.tsx:818:2)
+[browser] Detected `scroll-behavior: smooth` on the `<html>` element. To disable smooth scrolling during route transitions, add `data-scroll-behavior="smooth"` to your <html> element. Learn more: https://nextjs.org/docs/messages/missing-data-scroll-behavior
+⨯ ./src/components/SiteHeader.tsx:40:10
+the name `getDashboardPath` is defined multiple times
+  [90m38 |[0m ];
+  [90m39 |[0m
+[31m[1m>[0m [90m40 |[0m [36mfunction[0m getDashboardPath(role: string): string {
+  [90m   |[0m          [31m[1m^^^^^^^^^^^^^^^^[0m
+  [90m41 |[0m   [36mswitch[0m (role) {
+  [90m42 |[0m     [36mcase[0m [32m"STUDENT"[0m:
+  [90m43 |[0m       [36mreturn[0m [32m"/dashboard/ogrenci"[0m;
+
+Ecmascript file had an error
+
+Import trace:
+  Server Component:
+    ./src/components/SiteHeader.tsx
+    ./src/app/layout.tsx
+
+
+⨯ ./src/components/SiteHeader.tsx:40:10
+the name `getDashboardPath` is defined multiple times
+  [90m38 |[0m ];
+  [90m39 |[0m
+[31m[1m>[0m [90m40 |[0m [36mfunction[0m getDashboardPath(role: string): string {
+  [90m   |[0m          [31m[1m^^^^^^^^^^^^^^^^[0m
+  [90m41 |[0m   [36mswitch[0m (role) {
+  [90m42 |[0m     [36mcase[0m [32m"STUDENT"[0m:
+  [90m43 |[0m       [36mreturn[0m [32m"/dashboard/ogrenci"[0m;
+
+Ecmascript file had an error
+
+Import trace:
+  Server Component:
+    ./src/components/SiteHeader.tsx
+    ./src/app/layout.tsx
+
+
+[browser] Uncaught Error: ./src/components/SiteHeader.tsx:40:10
+the name `getDashboardPath` is defined multiple times
+  38 | ];
+  39 |
+> 40 | function getDashboardPath(role: string): string {
+     |          ^^^^^^^^^^^^^^^^
+  41 |   switch (role) {
+  42 |     case "STUDENT":
+  43 |       return "/dashboard/ogrenci";
+
+Ecmascript file had an error
+
+Import trace:
+  Server Component:
+    ./src/components/SiteHeader.tsx
+    ./src/app/layout.tsx
+
+
+    at <unknown> (Error: ./src/components/SiteHeader.tsx:40:10)
+    at <unknown> (Error: (./src/components/SiteHeader.tsx:40:10)
+⨯ ReferenceError: useState is not defined
+    at SiteHeader (src\components\SiteHeader.tsx:84:27)
+  82 |   const router = useRouter();
+  83 |
+> 84 |   const [user, setUser] = useState<HeaderUser | null>(null);
+     |                           ^
+  85 |   const [checking, setChecking] = useState(true);
+  86 |   const [menuOpen, setMenuOpen] = useState(false);
+  87 | {
+  digest: '3301529128'
+}
+⨯ ReferenceError: useState is not defined
+    at SiteHeader (src\components\SiteHeader.tsx:84:27)
+  82 |   const router = useRouter();
+  83 |
+> 84 |   const [user, setUser] = useState<HeaderUser | null>(null);
+     |                           ^
+  85 |   const [checking, setChecking] = useState(true);
+  86 |   const [menuOpen, setMenuOpen] = useState(false);
+  87 | {
+  digest: '3301529128'
+}
+⚠ Fast Refresh had to perform a full reload due to a runtime error.
+⨯ ReferenceError: useState is not defined
+    at SiteHeader (src\components\SiteHeader.tsx:85:35)
+  83 |
+  84 |   const { user, checking } = useSession();
+> 85 |   const [menuOpen, setMenuOpen] = useState(false);
+     |                                   ^
+  86 |
+  87 |   async function handleLogout() {
+  88 |     try { {
+  digest: '3289193766'
+}
+⚠ Fast Refresh had to perform a full reload due to a runtime error.
+[browser] Detected `scroll-behavior: smooth` on the `<html>` element. To disable smooth scrolling during route transitions, add `data-scroll-behavior="smooth"` to your <html> element. Learn more: https://nextjs.org/docs/messages/missing-data-scroll-behavior
+[browser] Detected `scroll-behavior: smooth` on the `<html>` element. To disable smooth scrolling during route transitions, add `data-scroll-behavior="smooth"` to your <html> element. Learn more: https://nextjs.org/docs/messages/missing-data-scroll-behavior
+[browser] Detected `scroll-behavior: smooth` on the `<html>` element. To disable smooth scrolling during route transitions, add `data-scroll-behavior="smooth"` to your <html> element. Learn more: https://nextjs.org/docs/messages/missing-data-scroll-behavior
+[browser] Detected `scroll-behavior: smooth` on the `<html>` element. To disable smooth scrolling during route transitions, add `data-scroll-behavior="smooth"` to your <html> element. Learn more: https://nextjs.org/docs/messages/missing-data-scroll-behavior
+[browser] Detected `scroll-behavior: smooth` on the `<html>` element. To disable smooth scrolling during route transitions, add `data-scroll-behavior="smooth"` to your <html> element. Learn more: https://nextjs.org/docs/messages/missing-data-scroll-behavior
+[browser] Detected `scroll-behavior: smooth` on the `<html>` element. To disable smooth scrolling during route transitions, add `data-scroll-behavior="smooth"` to your <html> element. Learn more: https://nextjs.org/docs/messages/missing-data-scroll-behavior
+[browser] Detected `scroll-behavior: smooth` on the `<html>` element. To disable smooth scrolling during route transitions, add `data-scroll-behavior="smooth"` to your <html> element. Learn more: https://nextjs.org/docs/messages/missing-data-scroll-behavior
+[browser] Detected `scroll-behavior: smooth` on the `<html>` element. To disable smooth scrolling during route transitions, add `data-scroll-behavior="smooth"` to your <html> element. Learn more: https://nextjs.org/docs/messages/missing-data-scroll-behavior
+[browser] Detected `scroll-behavior: smooth` on the `<html>` element. To disable smooth scrolling during route transitions, add `data-scroll-behavior="smooth"` to your <html> element. Learn more: https://nextjs.org/docs/messages/missing-data-scroll-behavior
+[browser] Detected `scroll-behavior: smooth` on the `<html>` element. To disable smooth scrolling during route transitions, add `data-scroll-behavior="smooth"` to your <html> element. Learn more: https://nextjs.org/docs/messages/missing-data-scroll-behavior
+[browser] Detected `scroll-behavior: smooth` on the `<html>` element. To disable smooth scrolling during route transitions, add `data-scroll-behavior="smooth"` to your <html> element. Learn more: https://nextjs.org/docs/messages/missing-data-scroll-behavior
+[browser] Detected `scroll-behavior: smooth` on the `<html>` element. To disable smooth scrolling during route transitions, add `data-scroll-behavior="smooth"` to your <html> element. Learn more: https://nextjs.org/docs/messages/missing-data-scroll-behavior
+⨯ ./src/components/SiteHeader.tsx:317:1
+Unexpected token. Did you mean `{'}'}` or `&rbrace;`?
+  [90m315 |[0m     </header>
+  [90m316 |[0m   );
+[31m[1m>[0m [90m317 |[0m }
+  [90m    |[0m [31m[1m^[0m
+  [90m318 |[0m
+
+Parsing ecmascript source code failed
+
+Import trace:
+  Server Component:
+    ./src/components/SiteHeader.tsx
+    ./src/app/layout.tsx
+
+
+⨯ ./src/components/SiteHeader.tsx:317:1
+Unexpected token. Did you mean `{'}'}` or `&rbrace;`?
+  [90m315 |[0m     </header>
+  [90m316 |[0m   );
+[31m[1m>[0m [90m317 |[0m }
+  [90m    |[0m [31m[1m^[0m
+  [90m318 |[0m
+
+Parsing ecmascript source code failed
+
+Import trace:
+  Server Component:
+    ./src/components/SiteHeader.tsx
+    ./src/app/layout.tsx
+
+
+⨯ ./src/components/SiteHeader.tsx:317:1
+Unexpected token. Did you mean `{'}'}` or `&rbrace;`?
+  [90m315 |[0m     </header>
+  [90m316 |[0m   );
+[31m[1m>[0m [90m317 |[0m }
+  [90m    |[0m [31m[1m^[0m
+  [90m318 |[0m
+
+Parsing ecmascript source code failed
+
+Import trace:
+  Server Component:
+    ./src/components/SiteHeader.tsx
+    ./src/app/layout.tsx
+
+
+[browser] Uncaught Error: ./src/components/SiteHeader.tsx:317:1
+Unexpected token. Did you mean `{'}'}` or `&rbrace;`?
+  315 |     </header>
+  316 |   );
+> 317 | }
+      | ^
+  318 |
+
+Parsing ecmascript source code failed
+
+Import trace:
+  Server Component:
+    ./src/components/SiteHeader.tsx
+    ./src/app/layout.tsx
+
+
+    at <unknown> (Error: ./src/components/SiteHeader.tsx:317:1)
+    at <unknown> (Error: (./src/components/SiteHeader.tsx:317:1)
+[browser] ./src/components/SiteHeader.tsx:317:1
+Unexpected token. Did you mean `{'}'}` or `&rbrace;`?
+  315 |     </header>
+  316 |   );
+> 317 | }
+      | ^
+  318 |
+
+Parsing ecmascript source code failed
+
+Import trace:
+  Server Component:
+    ./src/components/SiteHeader.tsx
+    ./src/app/layout.tsx 
+[browser] ./src/components/SiteHeader.tsx:317:1
+Unexpected token. Did you mean `{'}'}` or `&rbrace;`?
+  315 |     </header>
+  316 |   );
+> 317 | }
+      | ^
+  318 |
+
+Parsing ecmascript source code failed
+
+Import trace:
+  Server Component:
+    ./src/components/SiteHeader.tsx
+    ./src/app/layout.tsx 
+[browser] ./src/components/SiteHeader.tsx:317:1
+Unexpected token. Did you mean `{'}'}` or `&rbrace;`?
+  315 |     </header>
+  316 |   );
+> 317 | }
+      | ^
+  318 |
+
+Parsing ecmascript source code failed
+
+Import trace:
+  Server Component:
+    ./src/components/SiteHeader.tsx
+    ./src/app/layout.tsx 
+[browser] ./src/components/SiteHeader.tsx:317:1
+Unexpected token. Did you mean `{'}'}` or `&rbrace;`?
+  315 |     </header>
+  316 |   );
+> 317 | }
+      | ^
+  318 |
+
+Parsing ecmascript source code failed
+
+Import trace:
+  Server Component:
+    ./src/components/SiteHeader.tsx
+    ./src/app/layout.tsx 
+[browser] ./src/components/SiteHeader.tsx:317:1
+Unexpected token. Did you mean `{'}'}` or `&rbrace;`?
+  315 |     </header>
+  316 |   );
+> 317 | }
+      | ^
+  318 |
+
+Parsing ecmascript source code failed
+
+Import trace:
+  Server Component:
+    ./src/components/SiteHeader.tsx
+    ./src/app/layout.tsx 
+[browser] ./src/components/SiteHeader.tsx:317:1
+Unexpected token. Did you mean `{'}'}` or `&rbrace;`?
+  315 |     </header>
+  316 |   );
+> 317 | }
+      | ^
+  318 |
+
+Parsing ecmascript source code failed
+
+Import trace:
+  Server Component:
+    ./src/components/SiteHeader.tsx
+    ./src/app/layout.tsx 
+[browser] ./src/components/SiteHeader.tsx:317:1
+Unexpected token. Did you mean `{'}'}` or `&rbrace;`?
+  315 |     </header>
+  316 |   );
+> 317 | }
+      | ^
+  318 |
+
+Parsing ecmascript source code failed
+
+Import trace:
+  Server Component:
+    ./src/components/SiteHeader.tsx
+    ./src/app/layout.tsx 
+[browser] ./src/components/SiteHeader.tsx:317:1
+Unexpected token. Did you mean `{'}'}` or `&rbrace;`?
+  315 |     </header>
+  316 |   );
+> 317 | }
+      | ^
+  318 |
+
+Parsing ecmascript source code failed
+
+Import trace:
+  Server Component:
+    ./src/components/SiteHeader.tsx
+    ./src/app/layout.tsx 
+[browser] ./src/components/SiteHeader.tsx:317:1
+Unexpected token. Did you mean `{'}'}` or `&rbrace;`?
+  315 |     </header>
+  316 |   );
+> 317 | }
+      | ^
+  318 |
+
+Parsing ecmascript source code failed
+
+Import trace:
+  Server Component:
+    ./src/components/SiteHeader.tsx
+    ./src/app/layout.tsx 
+[browser] ./src/components/SiteHeader.tsx:317:1
+Unexpected token. Did you mean `{'}'}` or `&rbrace;`?
+  315 |     </header>
+  316 |   );
+> 317 | }
+      | ^
+  318 |
+
+Parsing ecmascript source code failed
+
+Import trace:
+  Server Component:
+    ./src/components/SiteHeader.tsx
+    ./src/app/layout.tsx 
+[browser] ./src/components/SiteHeader.tsx:317:1
+Unexpected token. Did you mean `{'}'}` or `&rbrace;`?
+  315 |     </header>
+  316 |   );
+> 317 | }
+      | ^
+  318 |
+
+Parsing ecmascript source code failed
+
+Import trace:
+  Server Component:
+    ./src/components/SiteHeader.tsx
+    ./src/app/layout.tsx 
+[browser] ./src/components/SiteHeader.tsx:317:1
+Unexpected token. Did you mean `{'}'}` or `&rbrace;`?
+  315 |     </header>
+  316 |   );
+> 317 | }
+      | ^
+  318 |
+
+Parsing ecmascript source code failed
+
+Import trace:
+  Server Component:
+    ./src/components/SiteHeader.tsx
+    ./src/app/layout.tsx 
+[browser] ./src/components/SiteHeader.tsx:317:1
+Unexpected token. Did you mean `{'}'}` or `&rbrace;`?
+  315 |     </header>
+  316 |   );
+> 317 | }
+      | ^
+  318 |
+
+Parsing ecmascript source code failed
+
+Import trace:
+  Server Component:
+    ./src/components/SiteHeader.tsx
+    ./src/app/layout.tsx 
+[browser] ./src/components/SiteHeader.tsx:317:1
+Unexpected token. Did you mean `{'}'}` or `&rbrace;`?
+  315 |     </header>
+  316 |   );
+> 317 | }
+      | ^
+  318 |
+
+Parsing ecmascript source code failed
+
+Import trace:
+  Server Component:
+    ./src/components/SiteHeader.tsx
+    ./src/app/layout.tsx 
+⨯ ./src/components/SiteHeader.tsx:317:1
+Unexpected token. Did you mean `{'}'}` or `&rbrace;`?
+  [90m315 |[0m     </header>
+  [90m316 |[0m   );
+[31m[1m>[0m [90m317 |[0m }
+  [90m    |[0m [31m[1m^[0m
+  [90m318 |[0m
+
+Parsing ecmascript source code failed
+
+Import trace:
+  Server Component:
+    ./src/components/SiteHeader.tsx
+    ./src/app/layout.tsx
+
+
+[browser] Uncaught Error: ./src/components/SiteHeader.tsx:317:1
+Unexpected token. Did you mean `{'}'}` or `&rbrace;`?
+  315 |     </header>
+  316 |   );
+> 317 | }
+      | ^
+  318 |
+
+Parsing ecmascript source code failed
+
+Import trace:
+  Server Component:
+    ./src/components/SiteHeader.tsx
+    ./src/app/layout.tsx
+
+
+    at <unknown> (Error: ./src/components/SiteHeader.tsx:317:1)
+    at <unknown> (Error: (./src/components/SiteHeader.tsx:317:1)
+[browser] ./src/components/SiteHeader.tsx:317:1
+Unexpected token. Did you mean `{'}'}` or `&rbrace;`?
+  315 |     </header>
+  316 |   );
+> 317 | }
+      | ^
+  318 |
+
+Parsing ecmascript source code failed
+
+Import trace:
+  Server Component:
+    ./src/components/SiteHeader.tsx
+    ./src/app/layout.tsx 
+[browser] ./src/components/SiteHeader.tsx:317:1
+Unexpected token. Did you mean `{'}'}` or `&rbrace;`?
+  315 |     </header>
+  316 |   );
+> 317 | }
+      | ^
+  318 |
+
+Parsing ecmascript source code failed
+
+Import trace:
+  Server Component:
+    ./src/components/SiteHeader.tsx
+    ./src/app/layout.tsx 
+[browser] ./src/components/SiteHeader.tsx:317:1
+Unexpected token. Did you mean `{'}'}` or `&rbrace;`?
+  315 |     </header>
+  316 |   );
+> 317 | }
+      | ^
+  318 |
+
+Parsing ecmascript source code failed
+
+Import trace:
+  Server Component:
+    ./src/components/SiteHeader.tsx
+    ./src/app/layout.tsx 
+[browser] ./src/components/SiteHeader.tsx:317:1
+Unexpected token. Did you mean `{'}'}` or `&rbrace;`?
+  315 |     </header>
+  316 |   );
+> 317 | }
+      | ^
+  318 |
+
+Parsing ecmascript source code failed
+
+Import trace:
+  Server Component:
+    ./src/components/SiteHeader.tsx
+    ./src/app/layout.tsx 
+[browser] ./src/components/SiteHeader.tsx:317:1
+Unexpected token. Did you mean `{'}'}` or `&rbrace;`?
+  315 |     </header>
+  316 |   );
+> 317 | }
+      | ^
+  318 |
+
+Parsing ecmascript source code failed
+
+Import trace:
+  Server Component:
+    ./src/components/SiteHeader.tsx
+    ./src/app/layout.tsx 
+[browser] ./src/components/SiteHeader.tsx:317:1
+Unexpected token. Did you mean `{'}'}` or `&rbrace;`?
+  315 |     </header>
+  316 |   );
+> 317 | }
+      | ^
+  318 |
+
+Parsing ecmascript source code failed
+
+Import trace:
+  Server Component:
+    ./src/components/SiteHeader.tsx
+    ./src/app/layout.tsx 
+[browser] ./src/components/SiteHeader.tsx:317:1
+Unexpected token. Did you mean `{'}'}` or `&rbrace;`?
+  315 |     </header>
+  316 |   );
+> 317 | }
+      | ^
+  318 |
+
+Parsing ecmascript source code failed
+
+Import trace:
+  Server Component:
+    ./src/components/SiteHeader.tsx
+    ./src/app/layout.tsx 
+[browser] ./src/components/SiteHeader.tsx:317:1
+Unexpected token. Did you mean `{'}'}` or `&rbrace;`?
+  315 |     </header>
+  316 |   );
+> 317 | }
+      | ^
+  318 |
+
+Parsing ecmascript source code failed
+
+Import trace:
+  Server Component:
+    ./src/components/SiteHeader.tsx
+    ./src/app/layout.tsx 
+[browser] ./src/components/SiteHeader.tsx:317:1
+Unexpected token. Did you mean `{'}'}` or `&rbrace;`?
+  315 |     </header>
+  316 |   );
+> 317 | }
+      | ^
+  318 |
+
+Parsing ecmascript source code failed
+
+Import trace:
+  Server Component:
+    ./src/components/SiteHeader.tsx
+    ./src/app/layout.tsx 
+[browser] ./src/components/SiteHeader.tsx:317:1
+Unexpected token. Did you mean `{'}'}` or `&rbrace;`?
+  315 |     </header>
+  316 |   );
+> 317 | }
+      | ^
+  318 |
+
+Parsing ecmascript source code failed
+
+Import trace:
+  Server Component:
+    ./src/components/SiteHeader.tsx
+    ./src/app/layout.tsx 
+[browser] ./src/components/SiteHeader.tsx:317:1
+Unexpected token. Did you mean `{'}'}` or `&rbrace;`?
+  315 |     </header>
+  316 |   );
+> 317 | }
+      | ^
+  318 |
+
+Parsing ecmascript source code failed
+
+Import trace:
+  Server Component:
+    ./src/components/SiteHeader.tsx
+    ./src/app/layout.tsx 
+[browser] ./src/components/SiteHeader.tsx:317:1
+Unexpected token. Did you mean `{'}'}` or `&rbrace;`?
+  315 |     </header>
+  316 |   );
+> 317 | }
+      | ^
+  318 |
+
+Parsing ecmascript source code failed
+
+Import trace:
+  Server Component:
+    ./src/components/SiteHeader.tsx
+    ./src/app/layout.tsx 
+[browser] ./src/components/SiteHeader.tsx:323:1
+Unexpected token. Did you mean `{'}'}` or `&rbrace;`?
+  321 |     </header>
+  322 |   );
+> 323 | }
+      | ^
+  324 |
+
+Parsing ecmascript source code failed
+
+Import trace:
+  Server Component:
+    ./src/components/SiteHeader.tsx
+    ./src/app/layout.tsx 
+[browser] ./src/components/SiteHeader.tsx:323:1
+Unexpected token. Did you mean `{'}'}` or `&rbrace;`?
+  321 |     </header>
+  322 |   );
+> 323 | }
+      | ^
+  324 |
+
+Parsing ecmascript source code failed
+
+Import trace:
+  Server Component:
+    ./src/components/SiteHeader.tsx
+    ./src/app/layout.tsx 
+[browser] ./src/components/SiteHeader.tsx:323:1
+Unexpected token. Did you mean `{'}'}` or `&rbrace;`?
+  321 |     </header>
+  322 |   );
+> 323 | }
+      | ^
+  324 |
+
+Parsing ecmascript source code failed
+
+Import trace:
+  Server Component:
+    ./src/components/SiteHeader.tsx
+    ./src/app/layout.tsx 
+[browser] ./src/components/SiteHeader.tsx:323:1
+Unexpected token. Did you mean `{'}'}` or `&rbrace;`?
+  321 |     </header>
+  322 |   );
+> 323 | }
+      | ^
+  324 |
+
+Parsing ecmascript source code failed
+
+Import trace:
+  Server Component:
+    ./src/components/SiteHeader.tsx
+    ./src/app/layout.tsx 
+[browser] ./src/components/SiteHeader.tsx:323:1
+Unexpected token. Did you mean `{'}'}` or `&rbrace;`?
+  321 |     </header>
+  322 |   );
+> 323 | }
+      | ^
+  324 |
+
+Parsing ecmascript source code failed
+
+Import trace:
+  Server Component:
+    ./src/components/SiteHeader.tsx
+    ./src/app/layout.tsx 
+[browser] ./src/components/SiteHeader.tsx:323:1
+Unexpected token. Did you mean `{'}'}` or `&rbrace;`?
+  321 |     </header>
+  322 |   );
+> 323 | }
+      | ^
+  324 |
+
+Parsing ecmascript source code failed
+
+Import trace:
+  Server Component:
+    ./src/components/SiteHeader.tsx
+    ./src/app/layout.tsx 
+[browser] ./src/components/SiteHeader.tsx:323:1
+Unexpected token. Did you mean `{'}'}` or `&rbrace;`?
+  321 |     </header>
+  322 |   );
+> 323 | }
+      | ^
+  324 |
+
+Parsing ecmascript source code failed
+
+Import trace:
+  Server Component:
+    ./src/components/SiteHeader.tsx
+    ./src/app/layout.tsx 
+[browser] ./src/components/SiteHeader.tsx:323:1
+Unexpected token. Did you mean `{'}'}` or `&rbrace;`?
+  321 |     </header>
+  322 |   );
+> 323 | }
+      | ^
+  324 |
+
+Parsing ecmascript source code failed
+
+Import trace:
+  Server Component:
+    ./src/components/SiteHeader.tsx
+    ./src/app/layout.tsx 
+[browser] ./src/components/SiteHeader.tsx:323:1
+Unexpected token. Did you mean `{'}'}` or `&rbrace;`?
+  321 |     </header>
+  322 |   );
+> 323 | }
+      | ^
+  324 |
+
+Parsing ecmascript source code failed
+
+Import trace:
+  Server Component:
+    ./src/components/SiteHeader.tsx
+    ./src/app/layout.tsx 
+[browser] ./src/components/SiteHeader.tsx:323:1
+Unexpected token. Did you mean `{'}'}` or `&rbrace;`?
+  321 |     </header>
+  322 |   );
+> 323 | }
+      | ^
+  324 |
+
+Parsing ecmascript source code failed
+
+Import trace:
+  Server Component:
+    ./src/components/SiteHeader.tsx
+    ./src/app/layout.tsx 
+[browser] ./src/components/SiteHeader.tsx:341:1
+Unexpected token. Did you mean `{'}'}` or `&rbrace;`?
+  339 |     </header>
+  340 |   );
+> 341 | }
+      | ^
+  342 |
+
+Parsing ecmascript source code failed
+
+Import trace:
+  Server Component:
+    ./src/components/SiteHeader.tsx
+    ./src/app/layout.tsx 
+⨯ ./src/components/SiteHeader.tsx:341:1
+Unexpected token. Did you mean `{'}'}` or `&rbrace;`?
+  [90m339 |[0m     </header>
+  [90m340 |[0m   );
+[31m[1m>[0m [90m341 |[0m }
+  [90m    |[0m [31m[1m^[0m
+  [90m342 |[0m
+
+Parsing ecmascript source code failed
+
+Import trace:
+  Server Component:
+    ./src/components/SiteHeader.tsx
+    ./src/app/layout.tsx
+
+
+[browser] Uncaught Error: ./src/components/SiteHeader.tsx:341:1
+Unexpected token. Did you mean `{'}'}` or `&rbrace;`?
+  339 |     </header>
+  340 |   );
+> 341 | }
+      | ^
+  342 |
+
+Parsing ecmascript source code failed
+
+Import trace:
+  Server Component:
+    ./src/components/SiteHeader.tsx
+    ./src/app/layout.tsx
+
+
+    at <unknown> (Error: ./src/components/SiteHeader.tsx:341:1)
+    at <unknown> (Error: (./src/components/SiteHeader.tsx:341:1)
+[browser] ./src/components/SiteHeader.tsx:341:1
+Unexpected token. Did you mean `{'}'}` or `&rbrace;`?
+  339 |     </header>
+  340 |   );
+> 341 | }
+      | ^
+  342 |
+
+Parsing ecmascript source code failed
+
+Import trace:
+  Server Component:
+    ./src/components/SiteHeader.tsx
+    ./src/app/layout.tsx 
+[browser] ./src/components/SiteHeader.tsx:341:1
+Unexpected token. Did you mean `{'}'}` or `&rbrace;`?
+  339 |     </header>
+  340 |   );
+> 341 | }
+      | ^
+  342 |
+
+Parsing ecmascript source code failed
+
+Import trace:
+  Server Component:
+    ./src/components/SiteHeader.tsx
+    ./src/app/layout.tsx 
+[browser] ./src/components/SiteHeader.tsx:341:1
+Unexpected token. Did you mean `{'}'}` or `&rbrace;`?
+  339 |     </header>
+  340 |   );
+> 341 | }
+      | ^
+  342 |
+
+Parsing ecmascript source code failed
+
+Import trace:
+  Server Component:
+    ./src/components/SiteHeader.tsx
+    ./src/app/layout.tsx 
+[browser] ./src/components/SiteHeader.tsx:341:1
+Unexpected token. Did you mean `{'}'}` or `&rbrace;`?
+  339 |     </header>
+  340 |   );
+> 341 | }
+      | ^
+  342 |
+
+Parsing ecmascript source code failed
+
+Import trace:
+  Server Component:
+    ./src/components/SiteHeader.tsx
+    ./src/app/layout.tsx 
+[browser] ./src/components/SiteHeader.tsx:341:1
+Unexpected token. Did you mean `{'}'}` or `&rbrace;`?
+  339 |     </header>
+  340 |   );
+> 341 | }
+      | ^
+  342 |
+
+Parsing ecmascript source code failed
+
+Import trace:
+  Server Component:
+    ./src/components/SiteHeader.tsx
+    ./src/app/layout.tsx 
+[browser] ./src/components/SiteHeader.tsx:341:1
+Unexpected token. Did you mean `{'}'}` or `&rbrace;`?
+  339 |     </header>
+  340 |   );
+> 341 | }
+      | ^
+  342 |
+
+Parsing ecmascript source code failed
+
+Import trace:
+  Server Component:
+    ./src/components/SiteHeader.tsx
+    ./src/app/layout.tsx 
+[browser] ./src/components/SiteHeader.tsx:341:1
+Unexpected token. Did you mean `{'}'}` or `&rbrace;`?
+  339 |     </header>
+  340 |   );
+> 341 | }
+      | ^
+  342 |
+
+Parsing ecmascript source code failed
+
+Import trace:
+  Server Component:
+    ./src/components/SiteHeader.tsx
+    ./src/app/layout.tsx 
+[browser] ./src/components/SiteHeader.tsx:341:1
+Unexpected token. Did you mean `{'}'}` or `&rbrace;`?
+  339 |     </header>
+  340 |   );
+> 341 | }
+      | ^
+  342 |
+
+Parsing ecmascript source code failed
+
+Import trace:
+  Server Component:
+    ./src/components/SiteHeader.tsx
+    ./src/app/layout.tsx 
+[browser] ./src/components/SiteHeader.tsx:341:1
+Unexpected token. Did you mean `{'}'}` or `&rbrace;`?
+  339 |     </header>
+  340 |   );
+> 341 | }
+      | ^
+  342 |
+
+Parsing ecmascript source code failed
+
+Import trace:
+  Server Component:
+    ./src/components/SiteHeader.tsx
+    ./src/app/layout.tsx 
+[browser] ./src/components/SiteHeader.tsx:341:1
+Unexpected token. Did you mean `{'}'}` or `&rbrace;`?
+  339 |     </header>
+  340 |   );
+> 341 | }
+      | ^
+  342 |
+
+Parsing ecmascript source code failed
+
+Import trace:
+  Server Component:
+    ./src/components/SiteHeader.tsx
+    ./src/app/layout.tsx 
+[browser] ./src/components/SiteHeader.tsx:341:1
+Unexpected token. Did you mean `{'}'}` or `&rbrace;`?
+  339 |     </header>
+  340 |   );
+> 341 | }
+      | ^
+  342 |
+
+Parsing ecmascript source code failed
+
+Import trace:
+  Server Component:
+    ./src/components/SiteHeader.tsx
+    ./src/app/layout.tsx 
+[browser] ./src/components/SiteHeader.tsx:341:1
+Unexpected token. Did you mean `{'}'}` or `&rbrace;`?
+  339 |     </header>
+  340 |   );
+> 341 | }
+      | ^
+  342 |
+
+Parsing ecmascript source code failed
+
+Import trace:
+  Server Component:
+    ./src/components/SiteHeader.tsx
+    ./src/app/layout.tsx 
+⨯ ./src/components/SiteHeader.tsx:341:1
+Unexpected token. Did you mean `{'}'}` or `&rbrace;`?
+  [90m339 |[0m     </header>
+  [90m340 |[0m   );
+[31m[1m>[0m [90m341 |[0m }
+  [90m    |[0m [31m[1m^[0m
+  [90m342 |[0m
+
+Parsing ecmascript source code failed
+
+Import trace:
+  Server Component:
+    ./src/components/SiteHeader.tsx
+    ./src/app/layout.tsx
+
+
+[browser] Uncaught Error: ./src/components/SiteHeader.tsx:341:1
+Unexpected token. Did you mean `{'}'}` or `&rbrace;`?
+  339 |     </header>
+  340 |   );
+> 341 | }
+      | ^
+  342 |
+
+Parsing ecmascript source code failed
+
+Import trace:
+  Server Component:
+    ./src/components/SiteHeader.tsx
+    ./src/app/layout.tsx
+
+
+    at <unknown> (Error: ./src/components/SiteHeader.tsx:341:1)
+    at <unknown> (Error: (./src/components/SiteHeader.tsx:341:1)
+[browser] ./src/components/SiteHeader.tsx:341:1
+Unexpected token. Did you mean `{'}'}` or `&rbrace;`?
+  339 |     </header>
+  340 |   );
+> 341 | }
+      | ^
+  342 |
+
+Parsing ecmascript source code failed
+
+Import trace:
+  Server Component:
+    ./src/components/SiteHeader.tsx
+    ./src/app/layout.tsx 
+[browser] ./src/components/SiteHeader.tsx:341:1
+Unexpected token. Did you mean `{'}'}` or `&rbrace;`?
+  339 |     </header>
+  340 |   );
+> 341 | }
+      | ^
+  342 |
+
+Parsing ecmascript source code failed
+
+Import trace:
+  Server Component:
+    ./src/components/SiteHeader.tsx
+    ./src/app/layout.tsx 
+[browser] ./src/components/SiteHeader.tsx:341:1
+Unexpected token. Did you mean `{'}'}` or `&rbrace;`?
+  339 |     </header>
+  340 |   );
+> 341 | }
+      | ^
+  342 |
+
+Parsing ecmascript source code failed
+
+Import trace:
+  Server Component:
+    ./src/components/SiteHeader.tsx
+    ./src/app/layout.tsx 
+[browser] ./src/components/SiteHeader.tsx:341:1
+Unexpected token. Did you mean `{'}'}` or `&rbrace;`?
+  339 |     </header>
+  340 |   );
+> 341 | }
+      | ^
+  342 |
+
+Parsing ecmascript source code failed
+
+Import trace:
+  Server Component:
+    ./src/components/SiteHeader.tsx
+    ./src/app/layout.tsx 
+[browser] ./src/components/SiteHeader.tsx:341:1
+Unexpected token. Did you mean `{'}'}` or `&rbrace;`?
+  339 |     </header>
+  340 |   );
+> 341 | }
+      | ^
+  342 |
+
+Parsing ecmascript source code failed
+
+Import trace:
+  Server Component:
+    ./src/components/SiteHeader.tsx
+    ./src/app/layout.tsx 
+[browser] ./src/components/SiteHeader.tsx:341:1
+Unexpected token. Did you mean `{'}'}` or `&rbrace;`?
+  339 |     </header>
+  340 |   );
+> 341 | }
+      | ^
+  342 |
+
+Parsing ecmascript source code failed
+
+Import trace:
+  Server Component:
+    ./src/components/SiteHeader.tsx
+    ./src/app/layout.tsx 
+[browser] ./src/components/SiteHeader.tsx:341:1
+Unexpected token. Did you mean `{'}'}` or `&rbrace;`?
+  339 |     </header>
+  340 |   );
+> 341 | }
+      | ^
+  342 |
+
+Parsing ecmascript source code failed
+
+Import trace:
+  Server Component:
+    ./src/components/SiteHeader.tsx
+    ./src/app/layout.tsx 
+[browser] ./src/components/SiteHeader.tsx:341:1
+Unexpected token. Did you mean `{'}'}` or `&rbrace;`?
+  339 |     </header>
+  340 |   );
+> 341 | }
+      | ^
+  342 |
+
+Parsing ecmascript source code failed
+
+Import trace:
+  Server Component:
+    ./src/components/SiteHeader.tsx
+    ./src/app/layout.tsx 
+[browser] ./src/components/SiteHeader.tsx:341:1
+Unexpected token. Did you mean `{'}'}` or `&rbrace;`?
+  339 |     </header>
+  340 |   );
+> 341 | }
+      | ^
+  342 |
+
+Parsing ecmascript source code failed
+
+Import trace:
+  Server Component:
+    ./src/components/SiteHeader.tsx
+    ./src/app/layout.tsx 
+[browser] ./src/components/SiteHeader.tsx:341:1
+Unexpected token. Did you mean `{'}'}` or `&rbrace;`?
+  339 |     </header>
+  340 |   );
+> 341 | }
+      | ^
+  342 |
+
+Parsing ecmascript source code failed
+
+Import trace:
+  Server Component:
+    ./src/components/SiteHeader.tsx
+    ./src/app/layout.tsx 
+[browser] ./src/components/SiteHeader.tsx:341:1
+Unexpected token. Did you mean `{'}'}` or `&rbrace;`?
+  339 |     </header>
+  340 |   );
+> 341 | }
+      | ^
+  342 |
+
+Parsing ecmascript source code failed
+
+Import trace:
+  Server Component:
+    ./src/components/SiteHeader.tsx
+    ./src/app/layout.tsx 
+[browser] ./src/components/SiteHeader.tsx:341:1
+Unexpected token. Did you mean `{'}'}` or `&rbrace;`?
+  339 |     </header>
+  340 |   );
+> 341 | }
+      | ^
+  342 |
+
+Parsing ecmascript source code failed
+
+Import trace:
+  Server Component:
+    ./src/components/SiteHeader.tsx
+    ./src/app/layout.tsx 
+⨯ ./src/components/SiteHeader.tsx:341:1
+Unexpected token. Did you mean `{'}'}` or `&rbrace;`?
+  [90m339 |[0m     </header>
+  [90m340 |[0m   );
+[31m[1m>[0m [90m341 |[0m }
+  [90m    |[0m [31m[1m^[0m
+  [90m342 |[0m
+
+Parsing ecmascript source code failed
+
+Import trace:
+  Server Component:
+    ./src/components/SiteHeader.tsx
+    ./src/app/layout.tsx
+
+
+[browser] Uncaught Error: ./src/components/SiteHeader.tsx:341:1
+Unexpected token. Did you mean `{'}'}` or `&rbrace;`?
+  339 |     </header>
+  340 |   );
+> 341 | }
+      | ^
+  342 |
+
+Parsing ecmascript source code failed
+
+Import trace:
+  Server Component:
+    ./src/components/SiteHeader.tsx
+    ./src/app/layout.tsx
+
+
+    at <unknown> (Error: ./src/components/SiteHeader.tsx:341:1)
+    at <unknown> (Error: (./src/components/SiteHeader.tsx:341:1)
+[browser] ./src/components/SiteHeader.tsx:341:1
+Unexpected token. Did you mean `{'}'}` or `&rbrace;`?
+  339 |     </header>
+  340 |   );
+> 341 | }
+      | ^
+  342 |
+
+Parsing ecmascript source code failed
+
+Import trace:
+  Server Component:
+    ./src/components/SiteHeader.tsx
+    ./src/app/layout.tsx 
+[browser] ./src/components/SiteHeader.tsx:341:1
+Unexpected token. Did you mean `{'}'}` or `&rbrace;`?
+  339 |     </header>
+  340 |   );
+> 341 | }
+      | ^
+  342 |
+
+Parsing ecmascript source code failed
+
+Import trace:
+  Server Component:
+    ./src/components/SiteHeader.tsx
+    ./src/app/layout.tsx 
+[browser] ./src/components/SiteHeader.tsx:341:1
+Unexpected token. Did you mean `{'}'}` or `&rbrace;`?
+  339 |     </header>
+  340 |   );
+> 341 | }
+      | ^
+  342 |
+
+Parsing ecmascript source code failed
+
+Import trace:
+  Server Component:
+    ./src/components/SiteHeader.tsx
+    ./src/app/layout.tsx 
+[browser] ./src/components/SiteHeader.tsx:341:1
+Unexpected token. Did you mean `{'}'}` or `&rbrace;`?
+  339 |     </header>
+  340 |   );
+> 341 | }
+      | ^
+  342 |
+
+Parsing ecmascript source code failed
+
+Import trace:
+  Server Component:
+    ./src/components/SiteHeader.tsx
+    ./src/app/layout.tsx 
+[browser] ./src/components/SiteHeader.tsx:341:1
+Unexpected token. Did you mean `{'}'}` or `&rbrace;`?
+  339 |     </header>
+  340 |   );
+> 341 | }
+      | ^
+  342 |
+
+Parsing ecmascript source code failed
+
+Import trace:
+  Server Component:
+    ./src/components/SiteHeader.tsx
+    ./src/app/layout.tsx 
+[browser] ./src/components/SiteHeader.tsx:341:1
+Unexpected token. Did you mean `{'}'}` or `&rbrace;`?
+  339 |     </header>
+  340 |   );
+> 341 | }
+      | ^
+  342 |
+
+Parsing ecmascript source code failed
+
+Import trace:
+  Server Component:
+    ./src/components/SiteHeader.tsx
+    ./src/app/layout.tsx 
+[browser] ./src/components/SiteHeader.tsx:341:1
+Unexpected token. Did you mean `{'}'}` or `&rbrace;`?
+  339 |     </header>
+  340 |   );
+> 341 | }
+      | ^
+  342 |
+
+Parsing ecmascript source code failed
+
+Import trace:
+  Server Component:
+    ./src/components/SiteHeader.tsx
+    ./src/app/layout.tsx 
+[browser] ./src/components/SiteHeader.tsx:341:1
+Unexpected token. Did you mean `{'}'}` or `&rbrace;`?
+  339 |     </header>
+  340 |   );
+> 341 | }
+      | ^
+  342 |
+
+Parsing ecmascript source code failed
+
+Import trace:
+  Server Component:
+    ./src/components/SiteHeader.tsx
+    ./src/app/layout.tsx 
+[browser] ./src/components/SiteHeader.tsx:341:1
+Unexpected token. Did you mean `{'}'}` or `&rbrace;`?
+  339 |     </header>
+  340 |   );
+> 341 | }
+      | ^
+  342 |
+
+Parsing ecmascript source code failed
+
+Import trace:
+  Server Component:
+    ./src/components/SiteHeader.tsx
+    ./src/app/layout.tsx 
+[browser] ./src/components/SiteHeader.tsx:341:1
+Unexpected token. Did you mean `{'}'}` or `&rbrace;`?
+  339 |     </header>
+  340 |   );
+> 341 | }
+      | ^
+  342 |
+
+Parsing ecmascript source code failed
+
+Import trace:
+  Server Component:
+    ./src/components/SiteHeader.tsx
+    ./src/app/layout.tsx 
+[browser] ./src/components/SiteHeader.tsx:341:1
+Unexpected token. Did you mean `{'}'}` or `&rbrace;`?
+  339 |     </header>
+  340 |   );
+> 341 | }
+      | ^
+  342 |
+
+Parsing ecmascript source code failed
+
+Import trace:
+  Server Component:
+    ./src/components/SiteHeader.tsx
+    ./src/app/layout.tsx 
+⨯ ./src/components/SiteHeader.tsx:341:1
+Unexpected token. Did you mean `{'}'}` or `&rbrace;`?
+  [90m339 |[0m     </header>
+  [90m340 |[0m   );
+[31m[1m>[0m [90m341 |[0m }
+  [90m    |[0m [31m[1m^[0m
+  [90m342 |[0m
+
+Parsing ecmascript source code failed
+
+Import trace:
+  Server Component:
+    ./src/components/SiteHeader.tsx
+    ./src/app/layout.tsx
+
+
+[browser] ./src/components/SiteHeader.tsx:341:1
+Unexpected token. Did you mean `{'}'}` or `&rbrace;`?
+  339 |     </header>
+  340 |   );
+> 341 | }
+      | ^
+  342 |
+
+Parsing ecmascript source code failed
+
+Import trace:
+  Server Component:
+    ./src/components/SiteHeader.tsx
+    ./src/app/layout.tsx 
+[browser] Uncaught Error: ./src/components/SiteHeader.tsx:341:1
+Unexpected token. Did you mean `{'}'}` or `&rbrace;`?
+  339 |     </header>
+  340 |   );
+> 341 | }
+      | ^
+  342 |
+
+Parsing ecmascript source code failed
+
+Import trace:
+  Server Component:
+    ./src/components/SiteHeader.tsx
+    ./src/app/layout.tsx
+
+
+    at <unknown> (Error: ./src/components/SiteHeader.tsx:341:1)
+    at <unknown> (Error: (./src/components/SiteHeader.tsx:341:1)
+[browser] ./src/components/SiteHeader.tsx:341:1
+Unexpected token. Did you mean `{'}'}` or `&rbrace;`?
+  339 |     </header>
+  340 |   );
+> 341 | }
+      | ^
+  342 |
+
+Parsing ecmascript source code failed
+
+Import trace:
+  Server Component:
+    ./src/components/SiteHeader.tsx
+    ./src/app/layout.tsx 
+[browser] ./src/components/SiteHeader.tsx:341:1
+Unexpected token. Did you mean `{'}'}` or `&rbrace;`?
+  339 |     </header>
+  340 |   );
+> 341 | }
+      | ^
+  342 |
+
+Parsing ecmascript source code failed
+
+Import trace:
+  Server Component:
+    ./src/components/SiteHeader.tsx
+    ./src/app/layout.tsx 
+[browser] ./src/components/SiteHeader.tsx:341:1
+Unexpected token. Did you mean `{'}'}` or `&rbrace;`?
+  339 |     </header>
+  340 |   );
+> 341 | }
+      | ^
+  342 |
+
+Parsing ecmascript source code failed
+
+Import trace:
+  Server Component:
+    ./src/components/SiteHeader.tsx
+    ./src/app/layout.tsx 
+[browser] ./src/components/SiteHeader.tsx:341:1
+Unexpected token. Did you mean `{'}'}` or `&rbrace;`?
+  339 |     </header>
+  340 |   );
+> 341 | }
+      | ^
+  342 |
+
+Parsing ecmascript source code failed
+
+Import trace:
+  Server Component:
+    ./src/components/SiteHeader.tsx
+    ./src/app/layout.tsx 
+[browser] ./src/components/SiteHeader.tsx:341:1
+Unexpected token. Did you mean `{'}'}` or `&rbrace;`?
+  339 |     </header>
+  340 |   );
+> 341 | }
+      | ^
+  342 |
+
+Parsing ecmascript source code failed
+
+Import trace:
+  Server Component:
+    ./src/components/SiteHeader.tsx
+    ./src/app/layout.tsx 
+[browser] ./src/components/SiteHeader.tsx:341:1
+Unexpected token. Did you mean `{'}'}` or `&rbrace;`?
+  339 |     </header>
+  340 |   );
+> 341 | }
+      | ^
+  342 |
+
+Parsing ecmascript source code failed
+
+Import trace:
+  Server Component:
+    ./src/components/SiteHeader.tsx
+    ./src/app/layout.tsx 
+[browser] ./src/components/SiteHeader.tsx:341:1
+Unexpected token. Did you mean `{'}'}` or `&rbrace;`?
+  339 |     </header>
+  340 |   );
+> 341 | }
+      | ^
+  342 |
+
+Parsing ecmascript source code failed
+
+Import trace:
+  Server Component:
+    ./src/components/SiteHeader.tsx
+    ./src/app/layout.tsx 
+[browser] ./src/components/SiteHeader.tsx:341:1
+Unexpected token. Did you mean `{'}'}` or `&rbrace;`?
+  339 |     </header>
+  340 |   );
+> 341 | }
+      | ^
+  342 |
+
+Parsing ecmascript source code failed
+
+Import trace:
+  Server Component:
+    ./src/components/SiteHeader.tsx
+    ./src/app/layout.tsx 
+[browser] ./src/components/SiteHeader.tsx:341:1
+Unexpected token. Did you mean `{'}'}` or `&rbrace;`?
+  339 |     </header>
+  340 |   );
+> 341 | }
+      | ^
+  342 |
+
+Parsing ecmascript source code failed
+
+Import trace:
+  Server Component:
+    ./src/components/SiteHeader.tsx
+    ./src/app/layout.tsx 
+[browser] ./src/components/SiteHeader.tsx:341:1
+Unexpected token. Did you mean `{'}'}` or `&rbrace;`?
+  339 |     </header>
+  340 |   );
+> 341 | }
+      | ^
+  342 |
+
+Parsing ecmascript source code failed
+
+Import trace:
+  Server Component:
+    ./src/components/SiteHeader.tsx
+    ./src/app/layout.tsx 
+[browser] ./src/components/SiteHeader.tsx:341:1
+Unexpected token. Did you mean `{'}'}` or `&rbrace;`?
+  339 |     </header>
+  340 |   );
+> 341 | }
+      | ^
+  342 |
+
+Parsing ecmascript source code failed
+
+Import trace:
+  Server Component:
+    ./src/components/SiteHeader.tsx
+    ./src/app/layout.tsx 
+[browser] ./src/components/SiteHeader.tsx:341:1
+Unexpected token. Did you mean `{'}'}` or `&rbrace;`?
+  339 |     </header>
+  340 |   );
+> 341 | }
+      | ^
+  342 |
+
+Parsing ecmascript source code failed
+
+Import trace:
+  Server Component:
+    ./src/components/SiteHeader.tsx
+    ./src/app/layout.tsx 
+[browser] ./src/components/SiteHeader.tsx:341:1
+Unexpected token. Did you mean `{'}'}` or `&rbrace;`?
+  339 |     </header>
+  340 |   );
+> 341 | }
+      | ^
+  342 |
+
+Parsing ecmascript source code failed
+
+Import trace:
+  Server Component:
+    ./src/components/SiteHeader.tsx
+    ./src/app/layout.tsx 
+[browser] ./src/components/SiteHeader.tsx:341:1
+Unexpected token. Did you mean `{'}'}` or `&rbrace;`?
+  339 |     </header>
+  340 |   );
+> 341 | }
+      | ^
+  342 |
+
+Parsing ecmascript source code failed
+
+Import trace:
+  Server Component:
+    ./src/components/SiteHeader.tsx
+    ./src/app/layout.tsx 
+[browser] ./src/components/SiteHeader.tsx:341:1
+Unexpected token. Did you mean `{'}'}` or `&rbrace;`?
+  339 |     </header>
+  340 |   );
+> 341 | }
+      | ^
+  342 |
+
+Parsing ecmascript source code failed
+
+Import trace:
+  Server Component:
+    ./src/components/SiteHeader.tsx
+    ./src/app/layout.tsx 
+[browser] Detected `scroll-behavior: smooth` on the `<html>` element. To disable smooth scrolling during route transitions, add `data-scroll-behavior="smooth"` to your <html> element. Learn more: https://nextjs.org/docs/messages/missing-data-scroll-behavior

@@ -91,7 +91,13 @@ export default function LoginPage() {
     <div className="login-page">
       <div className="login-card">
         <div className="login-header">
-          <div className="login-logo">🏛️</div>
+          <div className="login-logo">
+            <img
+              src="/uni_logo.gif"
+              alt="Mersin Üniversitesi"
+              className="login-logo-img"
+            />
+          </div>
 
           <h1>Mersin Üniversitesi</h1>
 

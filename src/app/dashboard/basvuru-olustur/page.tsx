@@ -32,9 +32,17 @@ export default function AuthenticatedPetitionPage() {
 
         const data = await response.json();
 
+        const ALLOWED_ROLES = [
+          "STUDENT",
+          "ACADEMIC",
+          "ADMIN",
+          "UNIT_MANAGER",
+          "UNIT_STAFF",
+        ];
+
         if (
           !data.user ||
-          (data.user.role !== "STUDENT" && data.user.role !== "ACADEMIC")
+          !ALLOWED_ROLES.includes(data.user.role)
         ) {
           router.replace("/ogrenci-akademisyen-giris");
           return;
@@ -56,9 +64,9 @@ export default function AuthenticatedPetitionPage() {
   }
 
   function getDashboardPath(role: string): string {
-    return role === "ACADEMIC"
-      ? "/dashboard/akademik"
-      : "/dashboard/ogrenci";
+    if (role === "ACADEMIC") return "/dashboard/akademik";
+    if (role === "STUDENT") return "/dashboard/ogrenci";
+    return "/dashboard/personel";
   }
 
   if (loading) {
@@ -82,11 +90,8 @@ export default function AuthenticatedPetitionPage() {
 
   if (successData) {
     return (
-      <main
-        className="login-page"
-        style={{ alignItems: "flex-start", paddingTop: 40 }}
-      >
-        <div style={{ width: "100%", maxWidth: 640, margin: "0 auto" }}>
+      <main className="main-content" style={{ maxWidth: 720 }}>
+        <div>
           <div
             className="card"
             style={{ padding: 32, textAlign: "center" }}
@@ -142,11 +147,8 @@ export default function AuthenticatedPetitionPage() {
   }
 
   return (
-    <main
-      className="login-page"
-      style={{ alignItems: "flex-start", paddingTop: 40, paddingBottom: 40 }}
-    >
-      <div style={{ width: "100%", maxWidth: 800, margin: "0 auto", padding: "0 16px" }}>
+    <main className="main-content" style={{ maxWidth: 860 }}>
+      <div>
         <div style={{ marginBottom: 16 }}>
           <button
             type="button"

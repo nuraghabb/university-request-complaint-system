@@ -234,18 +234,6 @@ export default function PersonelDashboardPage() {
     [petitions]
   );
 
-  async function handleLogout() {
-    try {
-      await fetch("/api/auth/logout", {
-        method: "POST",
-        credentials: "include",
-      });
-    } finally {
-      router.replace("/giris");
-      router.refresh();
-    }
-  }
-
   if (sessionLoading) {
     return <LoadingPage />;
   }
@@ -256,107 +244,9 @@ export default function PersonelDashboardPage() {
 
   return (
     <div className="page-wrapper">
-      <header
-        style={{
-          background: "#ffffff",
-          borderBottom: "1px solid var(--border)",
-        }}
-      >
-        <div
-          style={{
-            width: "100%",
-            maxWidth: 1240,
-            minHeight: 72,
-            margin: "0 auto",
-            padding: "0 20px",
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "space-between",
-            gap: 16,
-          }}
-        >
-          <div>
-            <h1
-              style={{
-                margin: 0,
-                fontSize: 18,
-                fontWeight: 700,
-              }}
-            >
-              Mersin Üniversitesi
-            </h1>
-
-            <p
-              style={{
-                margin: "4px 0 0",
-                color: "var(--text-muted)",
-                fontSize: 12,
-              }}
-            >
-              Dilek ve Öneri Yönetim Sistemi
-            </p>
-          </div>
-
-          <div
-            style={{
-              display: "flex",
-              alignItems: "center",
-              gap: 10,
-              flexWrap: "wrap",
-            }}
-          >
-            {user.role === "ADMIN" && (
-              <>
-                <button
-                  type="button"
-                  className="btn btn-outline btn-sm"
-                  onClick={() =>
-                    router.push("/dashboard/admin/categories")
-                  }
-                >
-                  Kategori Yönetimi
-                </button>
-
-                <button
-                  type="button"
-                  className="btn btn-outline btn-sm"
-                  onClick={() =>
-                    router.push("/dashboard/admin/units")
-                  }
-                >
-                  Birim Yönetimi
-                </button>
-              </>
-            )}
-
-            <button
-              type="button"
-              className="btn btn-ghost btn-sm"
-              onClick={handleLogout}
-            >
-              Çıkış Yap
-            </button>
-          </div>
-        </div>
-      </header>
-
-      <section
-        className="page-hero"
-        style={{
-          background:
-            "linear-gradient(135deg, #1a365d 0%, #2c5282 100%)",
-        }}
-      >
-        <div className="page-hero-inner">
-          <h1>Personel Yönetim Paneli</h1>
-
-          <p>
-            Hoş geldiniz, {user.firstName} {user.lastName}.
-          </p>
-        </div>
-      </section>
-
       <main className="main-content">
+        <h1 className="page-title">Personel Yönetim Paneli</h1>
+
         {error && (
           <div
             className="alert alert-error"
@@ -366,6 +256,47 @@ export default function PersonelDashboardPage() {
             ⚠️ {error}
           </div>
         )}
+
+        <div className="quick-actions">
+          <button
+            type="button"
+            className="quick-action-btn"
+            onClick={() =>
+              router.push("/dashboard/basvuru-olustur")
+            }
+          >
+            <span className="qa-icon">➕</span>
+            <span className="qa-label">Yeni Başvuru</span>
+          </button>
+
+          {user.role === "ADMIN" && (
+            <>
+              <button
+                type="button"
+                className="quick-action-btn"
+                onClick={() =>
+                  router.push("/dashboard/admin/categories")
+                }
+              >
+                <span className="qa-icon">🗂️</span>
+                <span className="qa-label">
+                  Kategori Yönetimi
+                </span>
+              </button>
+
+              <button
+                type="button"
+                className="quick-action-btn"
+                onClick={() =>
+                  router.push("/dashboard/admin/units")
+                }
+              >
+                <span className="qa-icon">🏢</span>
+                <span className="qa-label">Birim Yönetimi</span>
+              </button>
+            </>
+          )}
+        </div>
 
         <div className="card" style={{ marginBottom: 24 }}>
           <div className="card-header">

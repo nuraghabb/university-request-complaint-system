@@ -240,35 +240,20 @@ export default function AdminCategoriesPage() {
 
   return (
     <div className="page-wrapper">
-      <header style={{ background: "#fff", borderBottom: "1px solid var(--border)" }}>
-        <div style={{
-          maxWidth: 1100,
-          minHeight: 72,
-          margin: "0 auto",
-          padding: "0 20px",
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "space-between",
-          gap: 16,
-        }}>
-          <div>
-            <h1 style={{ margin: 0, fontSize: 18 }}>Kategori Yönetimi</h1>
-            <p style={{ margin: "4px 0 0", color: "var(--text-muted)", fontSize: 12 }}>
-              Yalnızca sistem yöneticileri erişebilir.
-            </p>
-          </div>
-
-          <button
-            type="button"
-            className="btn btn-ghost btn-sm"
-            onClick={() => router.push("/dashboard/personel")}
-          >
-            Personel Paneline Dön
-          </button>
-        </div>
-      </header>
-
       <main className="main-content" style={{ maxWidth: 1100 }}>
+        <button
+          type="button"
+          className="btn btn-ghost btn-sm"
+          style={{ marginBottom: 16 }}
+          onClick={() => router.push("/dashboard/admin")}
+        >
+          ← Yönetici Paneline Dön
+        </button>
+
+        <h2 className="section-title" style={{ marginTop: 0 }}>
+          Kategori Yönetimi
+        </h2>
+
         {error && (
           <div className="alert alert-error" role="alert" style={{ marginBottom: 16 }}>
             ⚠️ {error}

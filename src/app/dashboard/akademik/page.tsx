@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 
 interface Petition {
@@ -20,13 +20,26 @@ interface User {
   role: string;
 }
 
-const STATUS_COLORS: Record<string, string> = {
-  EMAIL_PENDING: "#ffa500",
-  RECEIVED: "#0066cc",
-  IN_REVIEW: "#9933ff",
-  ANSWERED: "#00aa00",
-  CLOSED: "#999",
-  REJECTED: "#cc0000",
+const STATUS_LABELS: Record<string, string> = {
+  EMAIL_PENDING: "E-posta Bekleniyor",
+  RECEIVED: "Alındı",
+  ASSIGNED: "Atandı",
+  IN_REVIEW: "İnceleniyor",
+  FORWARDED: "Yönlendirildi",
+  ANSWERED: "Cevaplandı",
+  CLOSED: "Kapatıldı",
+  REJECTED: "Reddedildi",
+};
+
+const STATUS_BADGES: Record<string, string> = {
+  EMAIL_PENDING: "status-email-pending",
+  RECEIVED: "status-received",
+  ASSIGNED: "status-assigned",
+  IN_REVIEW: "status-in-review",
+  FORWARDED: "status-forwarded",
+  ANSWERED: "status-answered",
+  CLOSED: "status-closed",
+  REJECTED: "status-rejected",
 };
 
 export default function AcademicDashboardPage() {
@@ -48,7 +61,6 @@ export default function AcademicDashboardPage() {
         const data = await response.json();
         setUser(data.user);
 
-        // Fetch petitions
         const petResponse = await fetch("/api/petitions", {
           credentials: "include",
         });
@@ -65,185 +77,169 @@ export default function AcademicDashboardPage() {
     loadData();
   }, [router]);
 
-  const handleLogout = async () => {
-    await fetch("/api/auth/logout", { method: "POST", credentials: "include" });
-    router.push("/");
-  };
+  const stats = useMemo(
+    () => ({
+      total: petitions.length,
+      processing: petitions.filter((petition) =>
+        ["RECEIVED", "ASSIGNED", "IN_REVIEW", "FORWARDED"].includes(
+          petition.status
+        )
+      ).length,
+      completed: petitions.filter((petition) =>
+        ["ANSWERED", "CLOSED"].includes(petition.status)
+      ).length,
+    }),
+    [petitions]
+  );
 
   if (loading) {
     return (
-      <div style={styles.container}>
-        <div style={styles.spinner}>Yükleniyor...</div>
-      </div>
+      <main
+        style={{
+          minHeight: "70vh",
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+          background: "var(--bg)",
+        }}
+      >
+        <div style={{ textAlign: "center" }}>
+          <div
+            className="spinner spinner-dark"
+            style={{
+              width: 40,
+              height: 40,
+              borderWidth: 3,
+              margin: "0 auto 16px",
+            }}
+          />
+          <p style={{ color: "var(--text-muted)" }}>
+            Panel yükleniyor...
+          </p>
+        </div>
+      </main>
     );
   }
 
   if (!user) return null;
 
   return (
-    <div style={styles.container}>
-      <header style={styles.header}>
-        <div>
-          <h1>Akademisyen Paneli</h1>
-          <p>Dilekçelerinizi yönetin</p>
-        </div>
-        <button onClick={handleLogout} style={styles.logoutBtn}>
-          Çıkış Yap
-        </button>
-      </header>
+    <div className="page-wrapper">
+      <main className="main-content">
+        <h1 className="page-title">Akademisyen Paneli</h1>
 
-      <div style={styles.content}>
-        <div style={styles.welcome}>
-          <h2>Hoşgeldiniz, {user.firstName} {user.lastName}</h2>
-          <p>E-posta: {user.email}</p>
-        </div>
-
-        <div style={styles.actionButtons}>
+        <div className="quick-actions">
           <button
-            style={styles.button}
-            onClick={() => router.push("/basvuru-misafir")}
+            type="button"
+            className="quick-action-btn"
+            onClick={() => router.push("/dashboard/basvuru-olustur")}
           >
-            ➕ Yeni Dilekçe Oluştur
+            <span className="qa-icon">➕</span>
+            <span className="qa-label">Yeni Başvuru</span>
           </button>
+
           <button
-            style={styles.button}
+            type="button"
+            className="quick-action-btn"
             onClick={() => router.push("/basvuru-takip")}
           >
-            🔍 Dilekçe Takip Et
+            <span className="qa-icon">🔍</span>
+            <span className="qa-label">Başvuru Takip</span>
           </button>
         </div>
 
-        <div style={styles.section}>
-          <h3>Başvurularınız ({petitions.length})</h3>
-          {petitions.length === 0 ? (
-            <div style={styles.empty}>
-              <p>Henüz başvuru bulunmamaktadır.</p>
-            </div>
-          ) : (
-            <div style={styles.petitionList}>
-              {petitions.map((petition) => (
-                <div key={petition.id} style={styles.petitionItem}>
-                  <div>
-                    <div style={styles.petitionCode}>{petition.trackingCode}</div>
-                    <div style={styles.petitionSubject}>{petition.subject}</div>
-                    <div style={styles.petitionDate}>
-                      {new Date(petition.createdAt).toLocaleDateString("tr-TR")}
-                    </div>
-                  </div>
-                  <div
-                    style={{
-                      ...styles.statusBadge,
-                      backgroundColor: STATUS_COLORS[petition.status] || "#999",
-                    }}
-                  >
-                    {petition.status}
-                  </div>
-                </div>
-              ))}
-            </div>
-          )}
+        <div className="stats-grid" style={{ marginBottom: 24 }}>
+          <StatCard
+            icon="📄"
+            value={stats.total}
+            label="Toplam Başvuru"
+          />
+          <StatCard
+            icon="🔄"
+            value={stats.processing}
+            label="İşlemde"
+          />
+          <StatCard
+            icon="✅"
+            value={stats.completed}
+            label="Tamamlanan"
+          />
         </div>
-      </div>
+
+        <div className="card">
+          <div className="card-header">
+            <span className="card-title">
+              📄 Başvurularınız ({petitions.length})
+            </span>
+          </div>
+
+          <div className="card-body">
+            {petitions.length === 0 ? (
+              <div className="empty-state">
+                <div className="empty-icon">📭</div>
+                <h3>Henüz başvurunuz bulunmuyor</h3>
+                <p>
+                  Yeni bir başvuru oluşturmak için &quot;Yeni
+                  Başvuru&quot; butonunu kullanın.
+                </p>
+              </div>
+            ) : (
+              <div className="petition-list">
+                {petitions.map((petition) => (
+                  <article
+                    key={petition.id}
+                    className="petition-item"
+                  >
+                    <div className="petition-item-left">
+                      <div className="petition-tracking">
+                        {petition.trackingCode}
+                      </div>
+                      <div className="petition-subject">
+                        {petition.subject}
+                      </div>
+                      <div className="petition-date">
+                        {new Date(
+                          petition.createdAt
+                        ).toLocaleDateString("tr-TR")}
+                      </div>
+                    </div>
+
+                    <div className="petition-item-right">
+                      <span
+                        className={`status-badge ${
+                          STATUS_BADGES[petition.status] ??
+                          "status-closed"
+                        }`}
+                      >
+                        {STATUS_LABELS[petition.status] ??
+                          petition.status}
+                      </span>
+                    </div>
+                  </article>
+                ))}
+              </div>
+            )}
+          </div>
+        </div>
+      </main>
     </div>
   );
 }
 
-const styles: Record<string, React.CSSProperties> = {
-  container: {
-    minHeight: "100vh",
-    backgroundColor: "#f5f5f5",
-  },
-  header: {
-    backgroundColor: "#0066cc",
-    color: "white",
-    padding: "24px",
-    display: "flex",
-    justifyContent: "space-between",
-    alignItems: "center",
-  },
-  logoutBtn: {
-    padding: "8px 16px",
-    backgroundColor: "rgba(255,255,255,0.2)",
-    color: "white",
-    border: "1px solid rgba(255,255,255,0.3)",
-    borderRadius: "4px",
-    cursor: "pointer",
-  },
-  content: {
-    maxWidth: "1000px",
-    margin: "0 auto",
-    padding: "32px 24px",
-  },
-  welcome: {
-    backgroundColor: "white",
-    padding: "20px",
-    borderRadius: "8px",
-    marginBottom: "24px",
-  },
-  actionButtons: {
-    display: "flex",
-    gap: "12px",
-    marginBottom: "24px",
-  },
-  button: {
-    flex: 1,
-    padding: "12px",
-    backgroundColor: "#0066cc",
-    color: "white",
-    border: "none",
-    borderRadius: "4px",
-    cursor: "pointer",
-    fontSize: "14px",
-    fontWeight: "600",
-  },
-  section: {
-    backgroundColor: "white",
-    padding: "24px",
-    borderRadius: "8px",
-  },
-  empty: {
-    padding: "32px",
-    textAlign: "center",
-    color: "#999",
-  },
-  petitionList: {
-    display: "flex",
-    flexDirection: "column",
-    gap: "12px",
-  },
-  petitionItem: {
-    display: "flex",
-    justifyContent: "space-between",
-    alignItems: "center",
-    padding: "16px",
-    border: "1px solid #ddd",
-    borderRadius: "4px",
-  },
-  petitionCode: {
-    fontSize: "12px",
-    color: "#999",
-    fontFamily: "monospace",
-  },
-  petitionSubject: {
-    fontSize: "14px",
-    fontWeight: "600",
-    margin: "4px 0",
-  },
-  petitionDate: {
-    fontSize: "12px",
-    color: "#999",
-  },
-  statusBadge: {
-    padding: "6px 12px",
-    color: "white",
-    borderRadius: "4px",
-    fontSize: "12px",
-    fontWeight: "600",
-  },
-  spinner: {
-    display: "flex",
-    alignItems: "center",
-    justifyContent: "center",
-    minHeight: "100vh",
-  },
-};
+function StatCard({
+  icon,
+  value,
+  label,
+}: {
+  icon: string;
+  value: number;
+  label: string;
+}) {
+  return (
+    <div className="stat-card">
+      <div className="stat-icon">{icon}</div>
+      <div className="stat-value">{value}</div>
+      <div className="stat-label">{label}</div>
+    </div>
+  );
+}

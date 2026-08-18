@@ -115,7 +115,7 @@ export interface AuthenticatedCreatePetitionSuccessResponse {
   trackingCode: string;
 }
 
-export interface AuthenticatedUserProfile {
+export interface AuthenticatedInternalUserProfile {
   id: number;
   firstName: string;
   lastName: string;
@@ -125,6 +125,23 @@ export interface AuthenticatedUserProfile {
   academicTitle?: string | null;
   department?: string | null;
 }
+
+export interface AuthenticatedStaffProfile {
+  id: number;
+  firstName: string;
+  lastName: string;
+  email: string;
+  role: "ADMIN" | "UNIT_MANAGER" | "UNIT_STAFF";
+  unit: { id: number; code: string; name: string } | null;
+}
+
+/**
+ * Giriş yapmış ve otomatik başvuru formunu kullanabilen kullanıcı profili.
+ * Öğrenci/akademisyen veya kurum personeli olabilir.
+ */
+export type AuthenticatedUserProfile =
+  | AuthenticatedInternalUserProfile
+  | AuthenticatedStaffProfile;
 
 export interface AuthenticatedPetitionFormData {
   phone: string;

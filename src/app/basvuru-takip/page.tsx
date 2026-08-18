@@ -1,6 +1,5 @@
 "use client";
 
-import Link from "next/link";
 import {
   FormEvent,
   useMemo,
@@ -224,30 +223,6 @@ export default function PetitionTrackingPage() {
 
   return (
     <main className="min-h-screen bg-gradient-to-b from-[#001f5c] to-[#003087]">
-      <section className="border-b border-slate-200 bg-white">
-        <div className="mx-auto flex w-full max-w-6xl items-center justify-between gap-4 px-4 py-5 sm:px-6 lg:px-8">
-          <div>
-         <p
-  className="text-sm font-semibold uppercase tracking-[0.16em]"
-  style={{ color: "#f59e0b" }}
->
-              Mersin Üniversitesi
-            </p>
-
-            <h1 className="mt-1 text-xl font-bold text-slate-950 sm:text-2xl">
-              Başvuru Takip Sistemi
-            </h1>
-          </div>
-
-          <Link
-            href="/basvuru-misafir"
-            className="rounded-lg border border-slate-300 px-4 py-2 text-sm font-semibold text-slate-700 transition hover:border-red-700 hover:text-red-700"
-          >
-            Yeni Başvuru
-          </Link>
-        </div>
-      </section>
-
       <section className="mx-auto w-full max-w-6xl px-4 py-10 sm:px-6 lg:px-8">
         <div className="grid gap-8 lg:grid-cols-[380px_1fr]">
           <aside>

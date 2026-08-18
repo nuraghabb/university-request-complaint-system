@@ -246,8 +246,7 @@ export default function AuthenticatedPetitionForm({
     }
   }
 
-  const roleLabel =
-    user.role === "ACADEMIC" ? "Akademisyen" : "Öğrenci";
+  const roleLabel = getRoleLabel(user);
 
   const selectedCategory = categories.find((c) => c.code === form.category);
   const selectedUnit = units.find((u) => u.code === form.targetUnitCode);
@@ -284,19 +283,24 @@ export default function AuthenticatedPetitionForm({
         <div style={{ fontSize: 14, color: "var(--text-secondary)", marginTop: 4 }}>
           {user.email} · {roleLabel}
         </div>
-        {user.studentNumber && (
+        {"studentNumber" in user && user.studentNumber && (
           <div style={{ fontSize: 13, color: "var(--text-secondary)", marginTop: 2 }}>
             Öğrenci No: {user.studentNumber}
           </div>
         )}
-        {user.department && (
+        {"department" in user && user.department && (
           <div style={{ fontSize: 13, color: "var(--text-secondary)", marginTop: 2 }}>
             Bölüm: {user.department}
           </div>
         )}
-        {user.academicTitle && (
+        {"academicTitle" in user && user.academicTitle && (
           <div style={{ fontSize: 13, color: "var(--text-secondary)", marginTop: 2 }}>
             Unvan: {user.academicTitle}
+          </div>
+        )}
+        {"unit" in user && user.unit && (
+          <div style={{ fontSize: 13, color: "var(--text-secondary)", marginTop: 2 }}>
+            Birim: {user.unit.name}
           </div>
         )}
       </div>
@@ -594,6 +598,21 @@ export default function AuthenticatedPetitionForm({
       </div>
     </div>
   );
+}
+
+function getRoleLabel(user: AuthenticatedUserProfile): string {
+  switch (user.role) {
+    case "ACADEMIC":
+      return "Akademisyen";
+    case "STUDENT":
+      return "Öğrenci";
+    case "ADMIN":
+      return "Sistem Yöneticisi";
+    case "UNIT_MANAGER":
+      return "Birim Yöneticisi";
+    default:
+      return "Birim Personeli";
+  }
 }
 
 function PreviewRow({
