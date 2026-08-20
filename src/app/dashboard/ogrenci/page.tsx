@@ -137,15 +137,6 @@ export default function StudentDashboardPage() {
             <span className="qa-icon">➕</span>
             <span className="qa-label">Yeni Başvuru</span>
           </button>
-
-          <button
-            type="button"
-            className="quick-action-btn"
-            onClick={() => router.push("/basvuru-takip")}
-          >
-            <span className="qa-icon">🔍</span>
-            <span className="qa-label">Başvuru Takip</span>
-          </button>
         </div>
 
         <div className="stats-grid" style={{ marginBottom: 24 }}>
@@ -189,6 +180,25 @@ export default function StudentDashboardPage() {
                   <article
                     key={petition.id}
                     className="petition-item"
+                    role="button"
+                    tabIndex={0}
+                    onClick={() =>
+                      router.push(
+                        `/dashboard/ogrenci/basvurular/${petition.id}`
+                      )
+                    }
+                    onKeyDown={(event) => {
+                      if (
+                        event.key === "Enter" ||
+                        event.key === " "
+                      ) {
+                        event.preventDefault();
+                        router.push(
+                          `/dashboard/ogrenci/basvurular/${petition.id}`
+                        );
+                      }
+                    }}
+                    style={{ cursor: "pointer" }}
                   >
                     <div className="petition-item-left">
                       <div className="petition-tracking">

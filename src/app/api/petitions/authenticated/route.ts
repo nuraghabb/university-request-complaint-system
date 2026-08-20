@@ -119,6 +119,7 @@ export async function POST(request: NextRequest) {
     ? getApplicantRoleTag("STAFF")
     : getApplicantRoleTag(session.user.role);
   const internalUserId = isStaffSession ? null : session.user.id;
+  const createdByStaffId = isStaffSession ? session.user.id : null;
 
   try {
     const body: unknown = await request.json();
@@ -222,6 +223,7 @@ export async function POST(request: NextRequest) {
         applicantEmail,
         applicantPhone: phone,
         internalUserId,
+        createdByStaffId,
         applicantRoleTag,
         identityVerifiedAt: now,
         botCheckVerifiedAt: now,

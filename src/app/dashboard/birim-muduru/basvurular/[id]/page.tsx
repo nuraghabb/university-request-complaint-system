@@ -160,6 +160,28 @@ interface StaffListResponse {
   error?: string;
 }
 
+interface PetitionResponse {
+  id: number;
+  content: string;
+  visibility: "INTERNAL" | "APPLICANT";
+  isFinal: boolean;
+  createdAt: string;
+  updatedAt: string;
+  author: {
+    id: number;
+    firstName: string;
+    lastName: string;
+    role: StaffRole;
+  };
+}
+
+interface RespondCreateResponse {
+  success: boolean;
+  response?: PetitionResponse;
+  petitionStatus?: PetitionStatus;
+  error?: string;
+}
+
 interface ClaimResponse {
   success: boolean;
   message?: string;
@@ -181,29 +203,6 @@ interface ClaimResponse {
       lastName: string;
     } | null;
   };
-  error?: string;
-}
-
-interface PetitionResponse {
-  id: number;
-  content: string;
-  visibility: "INTERNAL" | "APPLICANT";
-  isFinal: boolean;
-  createdAt: string;
-  updatedAt: string;
-  author: {
-    id: number;
-    firstName: string;
-    lastName: string;
-    role: StaffRole;
-  };
-}
-
-interface RespondCreateResponse {
-  success: boolean;
-  message?: string;
-  response?: PetitionResponse;
-  petitionStatus?: PetitionStatus;
   error?: string;
 }
 
@@ -421,6 +420,11 @@ export default function PetitionDetailPage() {
           return;
         }
 
+        if (authData.user.role !== "UNIT_MANAGER") {
+          router.replace("/dashboard/birim-muduru");
+          return;
+        }
+
         setCurrentUser(authData.user);
 
         const petitionResponse = await fetch(
@@ -471,10 +475,7 @@ export default function PetitionDetailPage() {
           loadedPetition.supportRequests ?? []
         );
 
-        if (
-          authData.user.role === "ADMIN" ||
-          authData.user.role === "UNIT_MANAGER"
-        ) {
+        if (authData.user.role === "UNIT_MANAGER") {
           setStaffLoading(true);
 
           const staffResponse = await fetch(
@@ -565,7 +566,6 @@ export default function PetitionDetailPage() {
         : null;
 
       if (
-        currentUser?.role === "ADMIN" ||
         currentUser?.role === "UNIT_MANAGER"
       ) {
         if (currentAssignedId !== newAssignedId) {
@@ -889,6 +889,30 @@ export default function PetitionDetailPage() {
     }
   }
 
+  async function handleRefreshNotes() {
+    if (!petition) return;
+
+    try {
+      const response = await fetch(
+        `/api/petitions/${petition.id}/notes`,
+        {
+          method: "GET",
+          credentials: "include",
+          cache: "no-store",
+        }
+      );
+
+      const data =
+        (await response.json()) as NotesResponse;
+
+      if (response.ok && data.success && data.notes) {
+        setChatNotes(data.notes);
+      }
+    } catch {
+      // silent refresh failure
+    }
+  }
+
   async function handleRespond() {
     if (!petition) return;
 
@@ -933,7 +957,7 @@ export default function PetitionDetailPage() {
       }
 
       setRespondContent("");
-      setSuccessMessage(data.message ?? "Cevap başarıyla gönderildi.");
+      setSuccessMessage("Cevap başarıyla gönderildi.");
     } catch (respondError) {
       setError(
         respondError instanceof Error
@@ -942,30 +966,6 @@ export default function PetitionDetailPage() {
       );
     } finally {
       setRespondSending(false);
-    }
-  }
-
-  async function handleRefreshNotes() {
-    if (!petition) return;
-
-    try {
-      const response = await fetch(
-        `/api/petitions/${petition.id}/notes`,
-        {
-          method: "GET",
-          credentials: "include",
-          cache: "no-store",
-        }
-      );
-
-      const data =
-        (await response.json()) as NotesResponse;
-
-      if (response.ok && data.success && data.notes) {
-        setChatNotes(data.notes);
-      }
-    } catch {
-      // silent refresh failure
     }
   }
 
@@ -999,11 +999,9 @@ export default function PetitionDetailPage() {
   }
 
   const canEdit =
-    currentUser.role === "ADMIN" ||
     currentUser.role === "UNIT_MANAGER";
 
   const canClose =
-    currentUser.role === "ADMIN" ||
     currentUser.role === "UNIT_MANAGER";
 
   const canClaim =
@@ -1022,15 +1020,9 @@ export default function PetitionDetailPage() {
   const canRespond =
     !isClosedOrRejected &&
     petition.status !== "EMAIL_PENDING" &&
-    ((currentUser.role === "ADMIN") ||
-     (currentUser.role === "UNIT_MANAGER" &&
-      currentUser.unit !== null &&
-      currentUser.unit.id === petition.targetUnit.id) ||
-     (currentUser.role === "UNIT_STAFF" &&
-      currentUser.unit !== null &&
-      currentUser.unit.id === petition.targetUnit.id &&
-      petition.assignedStaff !== null &&
-      petition.assignedStaff.id === currentUser.id));
+    currentUser.role === "UNIT_MANAGER" &&
+    currentUser.unit !== null &&
+    currentUser.unit.id === petition.targetUnit.id;
 
   const showChat = currentUser.unit !== null &&
     currentUser.unit.id === petition.targetUnit.id;

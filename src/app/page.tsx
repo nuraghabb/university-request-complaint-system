@@ -21,6 +21,9 @@ function getDashboardPath(
 ): string {
   if (role === "STUDENT") return "/dashboard/ogrenci";
   if (role === "ACADEMIC") return "/dashboard/akademik";
+  if (role === "ADMIN") return "/dashboard/admin";
+  if (role === "UNIT_MANAGER") return "/dashboard/birim-muduru";
+  if (role === "UNIT_STAFF") return "/dashboard/birim-personeli";
   return "/dashboard/personel";
 }
 

@@ -25,9 +25,11 @@ export function getDashboardPath(role: string): string {
     case "ACADEMIC":
       return "/dashboard/akademik";
     case "ADMIN":
+      return "/dashboard/admin";
     case "UNIT_MANAGER":
+      return "/dashboard/birim-muduru";
     case "UNIT_STAFF":
-      return "/dashboard/personel";
+      return "/dashboard/birim-personeli";
     default:
       return "/basvuru-misafir";
   }
@@ -41,7 +43,6 @@ export function useSession() {
 
   useEffect(() => {
     let mounted = true;
-    setChecking(true);
 
     async function loadSession() {
       attemptRef.current += 1;

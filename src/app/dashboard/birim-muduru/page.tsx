@@ -15,11 +15,7 @@ type PetitionStatus =
   | "CLOSED"
   | "REJECTED";
 
-type PetitionPriority =
-  | "LOW"
-  | "NORMAL"
-  | "HIGH"
-  | "URGENT";
+type PetitionPriority = "LOW" | "NORMAL" | "HIGH" | "URGENT";
 
 interface PetitionCategory {
   id: number;
@@ -64,6 +60,14 @@ interface Petition {
   } | null;
 }
 
+interface StaffMember {
+  id: number;
+  firstName: string;
+  lastName: string;
+  email: string;
+  role: StaffRole;
+}
+
 interface MeResponse {
   success: boolean;
   user: StaffUser | null;
@@ -75,6 +79,19 @@ interface PetitionsResponse {
   petitions?: Petition[];
   error?: string;
 }
+
+interface StaffResponse {
+  success: boolean;
+  unit: { id: number; code: string; name: string };
+  staff: StaffMember[];
+  error?: string;
+}
+
+const ROLE_LABELS: Record<StaffRole, string> = {
+  ADMIN: "Sistem Yöneticisi",
+  UNIT_MANAGER: "Birim Yöneticisi",
+  UNIT_STAFF: "Birim Personeli",
+};
 
 const STATUS_LABELS: Record<PetitionStatus, string> = {
   EMAIL_PENDING: "E-posta Bekleniyor",
@@ -94,13 +111,26 @@ const PRIORITY_LABELS: Record<PetitionPriority, string> = {
   URGENT: "Acil",
 };
 
-export default function PersonelDashboardPage() {
+const STATUS_CLASS: Record<PetitionStatus, string> = {
+  EMAIL_PENDING: "status-email-pending",
+  RECEIVED: "status-received",
+  ASSIGNED: "status-assigned",
+  IN_REVIEW: "status-in-review",
+  FORWARDED: "status-forwarded",
+  ANSWERED: "status-answered",
+  CLOSED: "status-closed",
+  REJECTED: "status-rejected",
+};
+
+export default function BirimMuduruDashboardPage() {
   const router = useRouter();
 
   const [user, setUser] = useState<StaffUser | null>(null);
   const [petitions, setPetitions] = useState<Petition[]>([]);
+  const [staffList, setStaffList] = useState<StaffMember[]>([]);
   const [sessionLoading, setSessionLoading] = useState(true);
   const [petitionsLoading, setPetitionsLoading] = useState(true);
+  const [staffLoading, setStaffLoading] = useState(true);
   const [error, setError] = useState("");
   const [searchText, setSearchText] = useState("");
   const [statusFilter, setStatusFilter] = useState<
@@ -138,6 +168,36 @@ export default function PersonelDashboardPage() {
     }
   }, [router]);
 
+  const fetchStaff = useCallback(
+    async (unitId: number) => {
+      setStaffLoading(true);
+
+      try {
+        const response = await fetch(`/api/staff?unitId=${unitId}`, {
+          method: "GET",
+          credentials: "include",
+          cache: "no-store",
+        });
+
+        const data = (await response.json()) as StaffResponse;
+
+        if (response.status === 401 || response.status === 403) {
+          router.replace("/giris");
+          return;
+        }
+
+        if (response.ok && data.success && data.staff) {
+          setStaffList(data.staff);
+        }
+      } catch {
+        // Staff loading failure is non-critical
+      } finally {
+        setStaffLoading(false);
+      }
+    },
+    [router]
+  );
+
   useEffect(() => {
     let isMounted = true;
 
@@ -156,11 +216,19 @@ export default function PersonelDashboardPage() {
           return;
         }
 
+        if (data.user.role !== "UNIT_MANAGER") {
+          router.replace("/giris");
+          return;
+        }
+
         if (isMounted) {
           setUser(data.user);
         }
 
-        await fetchPetitions();
+        await Promise.all([
+          fetchPetitions(),
+          data.user.unit ? fetchStaff(data.user.unit.id) : Promise.resolve(),
+        ]);
       } catch {
         if (isMounted) {
           setError(
@@ -179,7 +247,7 @@ export default function PersonelDashboardPage() {
     return () => {
       isMounted = false;
     };
-  }, [fetchPetitions, router]);
+  }, [fetchPetitions, fetchStaff, router]);
 
   const filteredPetitions = useMemo(() => {
     const normalizedSearch = searchText
@@ -188,23 +256,20 @@ export default function PersonelDashboardPage() {
 
     return petitions.filter((petition) => {
       const matchesStatus =
-        statusFilter === "ALL" ||
-        petition.status === statusFilter;
+        statusFilter === "ALL" || petition.status === statusFilter;
 
       const searchableText = [
         petition.trackingCode,
         petition.applicantFirstName,
         petition.applicantLastName,
         petition.subject,
-        petition.targetUnit.name,
         petition.category.name,
       ]
         .join(" ")
         .toLocaleLowerCase("tr-TR");
 
       const matchesSearch =
-        !normalizedSearch ||
-        searchableText.includes(normalizedSearch);
+        !normalizedSearch || searchableText.includes(normalizedSearch);
 
       return matchesStatus && matchesSearch;
     });
@@ -239,7 +304,7 @@ export default function PersonelDashboardPage() {
   return (
     <div className="page-wrapper">
       <main className="main-content">
-        <h1 className="page-title">Personel Yönetim Paneli</h1>
+        <h1 className="page-title">Birim Yönetici Paneli</h1>
 
         {error && (
           <div
@@ -251,7 +316,40 @@ export default function PersonelDashboardPage() {
           </div>
         )}
 
-        <div className="quick-actions">
+        <div className="stats-grid" style={{ marginBottom: 24 }}>
+          <StatCard
+            icon="📥"
+            value={stats.total}
+            label="Toplam Başvuru"
+          />
+          <StatCard
+            icon="🆕"
+            value={stats.received}
+            label="Yeni Başvuru"
+          />
+          <StatCard
+            icon="🔄"
+            value={stats.processing}
+            label="İşlemde"
+          />
+          <StatCard
+            icon="✅"
+            value={stats.completed}
+            label="Tamamlanan"
+          />
+        </div>
+
+        <div className="quick-actions" style={{ marginBottom: 24 }}>
+          <button
+            type="button"
+            className="quick-action-btn"
+            onClick={() =>
+              router.push("/dashboard/birim-muduru/personel")
+            }
+          >
+            <span className="qa-icon">👥</span>
+            <span className="qa-label">Personel Yönetimi</span>
+          </button>
           <button
             type="button"
             className="quick-action-btn"
@@ -262,60 +360,143 @@ export default function PersonelDashboardPage() {
             <span className="qa-icon">➕</span>
             <span className="qa-label">Yeni Başvuru</span>
           </button>
-
-          {user.role === "ADMIN" && (
-            <>
-              <button
-                type="button"
-                className="quick-action-btn"
-                onClick={() =>
-                  router.push("/dashboard/admin/categories")
-                }
-              >
-                <span className="qa-icon">🗂️</span>
-                <span className="qa-label">
-                  Kategori Yönetimi
-                </span>
-              </button>
-
-              <button
-                type="button"
-                className="quick-action-btn"
-                onClick={() =>
-                  router.push("/dashboard/admin/units")
-                }
-              >
-                <span className="qa-icon">🏢</span>
-                <span className="qa-label">Birim Yönetimi</span>
-              </button>
-            </>
-          )}
         </div>
 
-        <div className="stats-grid" style={{ marginBottom: 24 }}>
-          <StatCard
-            icon="📥"
-            value={stats.total}
-            label="Toplam Başvuru"
-          />
+        <div className="card" style={{ marginBottom: 24 }}>
+          <div className="card-header">
+            <span className="card-title">👥 Birim Personeli</span>
+          </div>
+          <div className="card-body">
+            {staffLoading ? (
+              <div
+                style={{
+                  textAlign: "center",
+                  padding: "30px 16px",
+                }}
+              >
+                <div
+                  className="spinner spinner-dark"
+                  style={{
+                    width: 32,
+                    height: 32,
+                    borderWidth: 3,
+                    margin: "0 auto 12px",
+                  }}
+                />
+                <p style={{ color: "var(--text-muted)" }}>
+                  Personel listesi yükleniyor...
+                </p>
+              </div>
+            ) : staffList.length === 0 ? (
+              <div
+                style={{
+                  textAlign: "center",
+                  padding: "30px 16px",
+                  color: "var(--text-muted)",
+                }}
+              >
+                Biriminizde personel bulunmuyor.
+              </div>
+            ) : (
+              <div
+                style={{
+                  display: "flex",
+                  flexDirection: "column",
+                  gap: 10,
+                }}
+              >
+                {staffList.map((staff) => (
+                  <div
+                    key={staff.id}
+                    style={{
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "space-between",
+                      padding: "12px 16px",
+                      border: "1px solid var(--border-light)",
+                      borderRadius: "var(--radius)",
+                      background: "var(--surface)",
+                      flexWrap: "wrap",
+                      gap: 8,
+                    }}
+                  >
+                    <div
+                      style={{
+                        display: "flex",
+                        alignItems: "center",
+                        gap: 12,
+                      }}
+                    >
+                      <div
+                        style={{
+                          width: 36,
+                          height: 36,
+                          borderRadius: "50%",
+                          background:
+                            staff.role === "UNIT_MANAGER"
+                              ? "var(--warning-bg)"
+                              : "rgba(0, 48, 135, 0.08)",
+                          color:
+                            staff.role === "UNIT_MANAGER"
+                              ? "var(--warning)"
+                              : "var(--primary)",
+                          display: "flex",
+                          alignItems: "center",
+                          justifyContent: "center",
+                          fontWeight: 700,
+                          fontSize: 14,
+                          flexShrink: 0,
+                        }}
+                      >
+                        {staff.firstName.charAt(0)}
+                        {staff.lastName.charAt(0)}
+                      </div>
+                      <div>
+                        <p
+                          style={{
+                            margin: 0,
+                            fontSize: 14,
+                            fontWeight: 600,
+                            color: "var(--text-primary)",
+                          }}
+                        >
+                          {staff.firstName} {staff.lastName}
+                        </p>
+                        <p
+                          style={{
+                            margin: 0,
+                            fontSize: 12,
+                            color: "var(--text-muted)",
+                          }}
+                        >
+                          {staff.email}
+                        </p>
+                      </div>
+                    </div>
 
-          <StatCard
-            icon="🆕"
-            value={stats.received}
-            label="Yeni Başvuru"
-          />
-
-          <StatCard
-            icon="🔄"
-            value={stats.processing}
-            label="İşlemde"
-          />
-
-          <StatCard
-            icon="✅"
-            value={stats.completed}
-            label="Tamamlanan"
-          />
+                    <span
+                      style={{
+                        fontSize: 11,
+                        fontWeight: 600,
+                        padding: "4px 10px",
+                        borderRadius: 12,
+                        background:
+                          staff.role === "UNIT_MANAGER"
+                            ? "var(--warning-bg)"
+                            : "rgba(0, 48, 135, 0.08)",
+                        color:
+                          staff.role === "UNIT_MANAGER"
+                            ? "var(--warning)"
+                            : "var(--primary)",
+                      }}
+                    >
+                      {ROLE_LABELS[staff.role]}
+                    </span>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
         </div>
 
         <div className="card">
@@ -329,7 +510,7 @@ export default function PersonelDashboardPage() {
               flexWrap: "wrap",
             }}
           >
-            <span className="card-title">📄 Başvurular</span>
+            <span className="card-title">📄 Birim Başvuruları</span>
 
             <button
               type="button"
@@ -354,7 +535,7 @@ export default function PersonelDashboardPage() {
               <input
                 type="search"
                 className="form-control"
-                placeholder="Takip kodu, ad soyad, konu veya birim ara..."
+                placeholder="Takip kodu, ad soyad veya konu ara..."
                 value={searchText}
                 onChange={(event) =>
                   setSearchText(event.target.value)
@@ -366,24 +547,17 @@ export default function PersonelDashboardPage() {
                 value={statusFilter}
                 onChange={(event) =>
                   setStatusFilter(
-                    event.target.value as
-                      | PetitionStatus
-                      | "ALL"
+                    event.target.value as PetitionStatus | "ALL"
                   )
                 }
               >
                 <option value="ALL">Tüm durumlar</option>
-
                 {Object.entries(STATUS_LABELS)
                   .filter(
-                    ([status]) =>
-                      status !== "EMAIL_PENDING"
+                    ([status]) => status !== "EMAIL_PENDING"
                   )
                   .map(([status, label]) => (
-                    <option
-                      key={status}
-                      value={status}
-                    >
+                    <option key={status} value={status}>
                       {label}
                     </option>
                   ))}
@@ -406,12 +580,7 @@ export default function PersonelDashboardPage() {
                     margin: "0 auto 14px",
                   }}
                 />
-
-                <p
-                  style={{
-                    color: "var(--text-muted)",
-                  }}
-                >
+                <p style={{ color: "var(--text-muted)" }}>
                   Başvurular yükleniyor...
                 </p>
               </div>
@@ -423,23 +592,15 @@ export default function PersonelDashboardPage() {
                 }}
               >
                 <div
-                  style={{
-                    fontSize: 46,
-                    marginBottom: 12,
-                  }}
+                  style={{ fontSize: 46, marginBottom: 12 }}
                 >
                   📭
                 </div>
-
                 <h2
-                  style={{
-                    fontSize: 17,
-                    marginBottom: 8,
-                  }}
+                  style={{ fontSize: 17, marginBottom: 8 }}
                 >
                   Başvuru bulunamadı
                 </h2>
-
                 <p
                   style={{
                     margin: 0,
@@ -447,7 +608,8 @@ export default function PersonelDashboardPage() {
                     fontSize: 13,
                   }}
                 >
-                  Seçilen ölçütlere uygun bir başvuru bulunmuyor.
+                  Seçilen ölçütlere uygun bir başvuru
+                  bulunmuyor.
                 </p>
               </div>
             ) : (
@@ -464,7 +626,7 @@ export default function PersonelDashboardPage() {
                     petition={petition}
                     onOpen={() =>
                       router.push(
-                        `/dashboard/personel/basvurular/${petition.id}`
+                        `/dashboard/birim-muduru/basvurular/${petition.id}`
                       )
                     }
                   />
@@ -476,8 +638,8 @@ export default function PersonelDashboardPage() {
       </main>
 
       <footer className="footer">
-        <strong>Mersin Üniversitesi</strong> — Dilek &amp; Öneri
-        Sistemi © {new Date().getFullYear()}
+        <strong>Mersin Üniversitesi</strong> — Dilek &amp;
+        Öneri Sistemi © {new Date().getFullYear()}
       </footer>
     </div>
   );
@@ -492,6 +654,7 @@ function PetitionCard({
 }) {
   return (
     <article
+      className="petition-item"
       role="button"
       tabIndex={0}
       onClick={onOpen}
@@ -501,155 +664,44 @@ function PetitionCard({
           onOpen();
         }
       }}
-      style={{
-        padding: 16,
-        border: "1px solid var(--border)",
-        borderRadius: "var(--radius)",
-        background: "var(--surface)",
-        cursor: "pointer",
-        transition:
-          "border-color 0.2s ease, box-shadow 0.2s ease, transform 0.2s ease",
-      }}
-      onMouseEnter={(event) => {
-        event.currentTarget.style.borderColor = "#2c5282";
-        event.currentTarget.style.boxShadow =
-          "0 8px 24px rgba(15, 23, 42, 0.08)";
-        event.currentTarget.style.transform =
-          "translateY(-1px)";
-      }}
-      onMouseLeave={(event) => {
-        event.currentTarget.style.borderColor =
-          "var(--border)";
-        event.currentTarget.style.boxShadow = "none";
-        event.currentTarget.style.transform =
-          "translateY(0)";
-      }}
     >
-      <div
-        style={{
-          display: "flex",
-          justifyContent: "space-between",
-          alignItems: "flex-start",
-          gap: 14,
-          flexWrap: "wrap",
-        }}
-      >
-        <div style={{ flex: 1, minWidth: 220 }}>
-          <div
-            style={{
-              display: "flex",
-              alignItems: "center",
-              gap: 8,
-              flexWrap: "wrap",
-              marginBottom: 8,
-            }}
-          >
-            <span
-              style={{
-                fontFamily: "monospace",
-                fontSize: 12,
-                color: "var(--text-muted)",
-              }}
-            >
-              {petition.trackingCode}
-            </span>
-
-            <span
-              style={{
-                fontSize: 12,
-                fontWeight: 600,
-              }}
-            >
-              🏷️ {petition.category.name}
-            </span>
-          </div>
-
-          <h2
-            style={{
-              margin: "0 0 8px",
-              fontSize: 16,
-            }}
-          >
-            {petition.subject}
-          </h2>
-
-          <p
-            style={{
-              margin: "0 0 6px",
-              color: "var(--text-secondary)",
-              fontSize: 13,
-            }}
-          >
-            Başvuru sahibi:{" "}
-            <strong>
-              {petition.applicantFirstName}{" "}
-              {petition.applicantLastName}
-            </strong>
-          </p>
-
-          <p
-            style={{
-              margin: 0,
-              color: "var(--text-muted)",
-              fontSize: 12,
-            }}
-          >
-            Birim: {petition.targetUnit.name} ·{" "}
-            {formatDate(petition.createdAt)}
-          </p>
-        </div>
-
-        <div
-          style={{
-            minWidth: 160,
-            textAlign: "right",
-          }}
-        >
-          <p
-            style={{
-              margin: "0 0 6px",
-              fontSize: 12,
-              fontWeight: 700,
-            }}
-          >
+      <div className="petition-item-left">
+        <p className="petition-tracking">
+          {petition.trackingCode}
+        </p>
+        <h2 className="petition-subject">
+          {petition.subject}
+        </h2>
+        <div className="petition-meta">
+          <span className={`status-badge ${STATUS_CLASS[petition.status]}`}>
             {STATUS_LABELS[petition.status]}
-          </p>
-
-          <p
-            style={{
-              margin: "0 0 6px",
-              color: "var(--text-muted)",
-              fontSize: 12,
-            }}
-          >
-            Öncelik:{" "}
-            {PRIORITY_LABELS[petition.priority]}
-          </p>
-
-          <p
-            style={{
-              margin: "0 0 10px",
-              color: "var(--text-muted)",
-              fontSize: 12,
-            }}
-          >
-            Atanan:{" "}
-            {petition.assignedStaff
-              ? `${petition.assignedStaff.firstName} ${petition.assignedStaff.lastName}`
-              : "Atanmadı"}
-          </p>
-
-          <span
-            style={{
-              display: "inline-block",
-              color: "#2c5282",
-              fontSize: 12,
-              fontWeight: 700,
-            }}
-          >
-            Detayı Aç →
+          </span>
+          <span className="cat-badge">
+            {petition.category.name}
+          </span>
+          <span>
+            {petition.applicantFirstName}{" "}
+            {petition.applicantLastName}
+          </span>
+          <span>
+            Öncelik: {PRIORITY_LABELS[petition.priority]}
           </span>
         </div>
+        <p className="petition-date">
+          {formatDate(petition.createdAt)}
+        </p>
+      </div>
+      <div className="petition-item-right">
+        <span
+          style={{
+            display: "inline-block",
+            color: "var(--primary)",
+            fontSize: 13,
+            fontWeight: 600,
+          }}
+        >
+          Detayı Aç →
+        </span>
       </div>
     </article>
   );
@@ -694,9 +746,8 @@ function LoadingPage() {
             margin: "0 auto 16px",
           }}
         />
-
         <p style={{ color: "var(--text-muted)" }}>
-          Personel paneli yükleniyor...
+          Birim yöneticisi paneli yükleniyor...
         </p>
       </div>
     </div>

@@ -90,6 +90,7 @@ function isClosePetitionRequest(
  * Yetkiler:
  * - ADMIN
  * - Başvurunun hedef birimindeki UNIT_MANAGER
+ * - Başvurunun hedef birimindeki ve atanan UNIT_STAFF
  */
 export async function POST(
   request: NextRequest,
@@ -247,7 +248,8 @@ export async function POST(
 
     if (
       currentStaff.role !== "ADMIN" &&
-      currentStaff.role !== "UNIT_MANAGER"
+      currentStaff.role !== "UNIT_MANAGER" &&
+      currentStaff.role !== "UNIT_STAFF"
     ) {
       return NextResponse.json(
         {
@@ -317,6 +319,40 @@ export async function POST(
           success: false,
           error:
             "Yalnızca kendi biriminize ait başvuruları kapatabilir veya reddedebilirsiniz.",
+        },
+        {
+          status: 403,
+          headers: createNoStoreHeaders(),
+        }
+      );
+    }
+
+    if (
+      currentStaff.role === "UNIT_STAFF" &&
+      currentStaff.unitId !== petition.targetUnitId
+    ) {
+      return NextResponse.json(
+        {
+          success: false,
+          error:
+            "Yalnızca kendi biriminize ait başvuruları kapatabilir veya reddedebilirsiniz.",
+        },
+        {
+          status: 403,
+          headers: createNoStoreHeaders(),
+        }
+      );
+    }
+
+    if (
+      currentStaff.role === "UNIT_STAFF" &&
+      petition.assignedStaffId !== currentStaff.id
+    ) {
+      return NextResponse.json(
+        {
+          success: false,
+          error:
+            "Yalnızca size atanmış başvuruları kapatabilir veya reddedebilirsiniz.",
         },
         {
           status: 403,

@@ -63,6 +63,12 @@ enum AuditActorType {
   SYSTEM
 }
 
+enum SupportRequestStatus {
+  PENDING
+  ACCEPTED
+  REJECTED
+}
+
 enum AuditAction {
   CREATE
   READ
@@ -96,12 +102,16 @@ model StaffUser {
   createdAt   DateTime  @default(now())
   updatedAt   DateTime  @updatedAt
 
-  assignedPetitions   Petition[]              @relation("CurrentAssignee")
-  assignmentsReceived PetitionAssignment[]    @relation("AssignmentReceiver")
-  assignmentsCreated  PetitionAssignment[]    @relation("AssignmentCreator")
-  responses           PetitionResponse[]
-  statusChanges       PetitionStatusHistory[]
-  auditLogs           AuditLog[]              @relation("AuditStaffActor")
+  assignedPetitions        Petition[]              @relation("CurrentAssignee")
+  createdPetitions         Petition[]              @relation("PetitionCreator")
+  assignmentsReceived      PetitionAssignment[]    @relation("AssignmentReceiver")
+  assignmentsCreated       PetitionAssignment[]    @relation("AssignmentCreator")
+  responses                PetitionResponse[]
+  statusChanges            PetitionStatusHistory[]
+  auditLogs                AuditLog[]              @relation("AuditStaffActor")
+  petitionNotes            PetitionNote[]
+  requestedSupportRequests SupportRequest[]        @relation("RequestedSupport")
+  resolvedSupportRequests  SupportRequest[]        @relation("ResolvedSupport")
 
   @@index([unitId])
   @@index([role, isActive])
@@ -109,16 +119,16 @@ model StaffUser {
 }
 
 model InternalUser {
-  id           Int               @id @default(autoincrement())
-  firstName    String            @db.VarChar(100)
-  lastName     String            @db.VarChar(100)
-  email        String            @unique @db.VarChar(255)
-  passwordHash String            @db.VarChar(255)
+  id           Int              @id @default(autoincrement())
+  firstName    String           @db.VarChar(100)
+  lastName     String           @db.VarChar(100)
+  email        String           @unique @db.VarChar(255)
+  passwordHash String           @db.VarChar(255)
   role         InternalUserRole
 
-  studentNumber  String?  @db.VarChar(20)
-  academicTitle  String?  @db.VarChar(100)
-  department     String?  @db.VarChar(200)
+  studentNumber String? @db.VarChar(20)
+  academicTitle String? @db.VarChar(100)
+  department    String? @db.VarChar(200)
 
   isActive    Boolean   @default(true)
   lastLoginAt DateTime?
@@ -142,10 +152,11 @@ model Unit {
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
 
-  staff           StaffUser[]
-  petitions       Petition[]
-  assignmentsFrom PetitionAssignment[] @relation("AssignmentFromUnit")
-  assignmentsTo   PetitionAssignment[] @relation("AssignmentToUnit")
+  staff             StaffUser[]
+  petitions         Petition[]
+  assignmentsFrom   PetitionAssignment[] @relation("AssignmentFromUnit")
+  assignmentsTo     PetitionAssignment[] @relation("AssignmentToUnit")
+  supportedRequests SupportRequest[]     @relation("SupportedRequest")
 
   @@index([isActive])
   @@map("units")
@@ -206,6 +217,9 @@ model Petition {
   assignedStaffId Int?
   assignedStaff   StaffUser? @relation("CurrentAssignee", fields: [assignedStaffId], references: [id], onDelete: SetNull)
 
+  createdByStaffId Int?
+  createdByStaff   StaffUser? @relation("PetitionCreator", fields: [createdByStaffId], references: [id], onDelete: SetNull)
+
   subject  String           @db.VarChar(500)
   content  String           @db.Text
   status   PetitionStatus   @default(EMAIL_PENDING)
@@ -221,10 +235,13 @@ model Petition {
   responses          PetitionResponse[]
   statusHistory      PetitionStatusHistory[]
   notifications      NotificationOutbox[]
+  notes              PetitionNote[]
+  supportRequests    SupportRequest[]
 
   @@index([categoryId])
   @@index([targetUnitId, status])
   @@index([assignedStaffId, status])
+  @@index([createdByStaffId])
   @@index([applicantEmail])
   @@index([internalUserId])
   @@index([emailVerifiedAt])
@@ -361,6 +378,44 @@ model NotificationOutbox {
   @@index([status, availableAt])
   @@index([petitionId])
   @@map("notification_outbox")
+}
+
+model PetitionNote {
+  id         Int       @id @default(autoincrement())
+  petitionId Int
+  petition   Petition  @relation(fields: [petitionId], references: [id], onDelete: Cascade)
+  authorId   Int
+  author     StaffUser @relation(fields: [authorId], references: [id], onDelete: Restrict)
+  content    String    @db.Text
+  createdAt  DateTime  @default(now())
+  updatedAt  DateTime  @updatedAt
+
+  @@index([petitionId, createdAt])
+  @@index([authorId])
+  @@map("petition_notes")
+}
+
+model SupportRequest {
+  id            Int                  @id @default(autoincrement())
+  petitionId    Int
+  petition      Petition             @relation(fields: [petitionId], references: [id], onDelete: Cascade)
+  requestedById Int
+  requestedBy   StaffUser            @relation("RequestedSupport", fields: [requestedById], references: [id], onDelete: Restrict)
+  message       String               @db.Text
+  status        SupportRequestStatus @default(PENDING)
+  supportUnitId Int?
+  supportUnit   Unit?                @relation("SupportedRequest", fields: [supportUnitId], references: [id], onDelete: SetNull)
+  resolvedById  Int?
+  resolvedBy    StaffUser?           @relation("ResolvedSupport", fields: [resolvedById], references: [id], onDelete: SetNull)
+  resolvedAt    DateTime?
+  createdAt     DateTime             @default(now())
+  updatedAt     DateTime             @updatedAt
+
+  @@index([petitionId])
+  @@index([requestedById])
+  @@index([supportUnitId])
+  @@index([status])
+  @@map("support_requests")
 }
 
 model AuditLog {

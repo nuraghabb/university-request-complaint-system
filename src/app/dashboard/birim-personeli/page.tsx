@@ -15,11 +15,7 @@ type PetitionStatus =
   | "CLOSED"
   | "REJECTED";
 
-type PetitionPriority =
-  | "LOW"
-  | "NORMAL"
-  | "HIGH"
-  | "URGENT";
+type PetitionPriority = "LOW" | "NORMAL" | "HIGH" | "URGENT";
 
 interface PetitionCategory {
   id: number;
@@ -94,7 +90,18 @@ const PRIORITY_LABELS: Record<PetitionPriority, string> = {
   URGENT: "Acil",
 };
 
-export default function PersonelDashboardPage() {
+const STATUS_CLASS: Record<PetitionStatus, string> = {
+  EMAIL_PENDING: "status-email-pending",
+  RECEIVED: "status-received",
+  ASSIGNED: "status-assigned",
+  IN_REVIEW: "status-in-review",
+  FORWARDED: "status-forwarded",
+  ANSWERED: "status-answered",
+  CLOSED: "status-closed",
+  REJECTED: "status-rejected",
+};
+
+export default function BirimPersoneliDashboardPage() {
   const router = useRouter();
 
   const [user, setUser] = useState<StaffUser | null>(null);
@@ -106,6 +113,8 @@ export default function PersonelDashboardPage() {
   const [statusFilter, setStatusFilter] = useState<
     PetitionStatus | "ALL"
   >("ALL");
+  const [claimingId, setClaimingId] = useState<number | null>(null);
+  const [claimError, setClaimError] = useState("");
 
   const fetchPetitions = useCallback(async () => {
     setPetitionsLoading(true);
@@ -156,6 +165,11 @@ export default function PersonelDashboardPage() {
           return;
         }
 
+        if (data.user.role !== "UNIT_STAFF") {
+          router.replace("/giris");
+          return;
+        }
+
         if (isMounted) {
           setUser(data.user);
         }
@@ -181,6 +195,48 @@ export default function PersonelDashboardPage() {
     };
   }, [fetchPetitions, router]);
 
+  const handleClaim = useCallback(
+    async (petitionId: number) => {
+      setClaimingId(petitionId);
+      setClaimError("");
+
+      try {
+        const response = await fetch(
+          `/api/petitions/${petitionId}/claim`,
+          {
+            method: "POST",
+            credentials: "include",
+            cache: "no-store",
+          }
+        );
+
+        const data = (await response.json()) as {
+          success: boolean;
+          error?: string;
+        };
+
+        if (response.status === 401 || response.status === 403) {
+          router.replace("/giris");
+          return;
+        }
+
+        if (!response.ok || !data.success) {
+          setClaimError(
+            data.error || "Görev üstlenilirken bir hata oluştu."
+          );
+          return;
+        }
+
+        await fetchPetitions();
+      } catch {
+        setClaimError("Görev üstlenilirken sunucuya ulaşılamadı.");
+      } finally {
+        setClaimingId(null);
+      }
+    },
+    [fetchPetitions, router]
+  );
+
   const filteredPetitions = useMemo(() => {
     const normalizedSearch = searchText
       .trim()
@@ -196,7 +252,6 @@ export default function PersonelDashboardPage() {
         petition.applicantFirstName,
         petition.applicantLastName,
         petition.subject,
-        petition.targetUnit.name,
         petition.category.name,
       ]
         .join(" ")
@@ -213,19 +268,22 @@ export default function PersonelDashboardPage() {
   const stats = useMemo(
     () => ({
       total: petitions.length,
-      received: petitions.filter(
-        (petition) => petition.status === "RECEIVED"
+      unassigned: petitions.filter(
+        (petition) =>
+          petition.assignedStaff === null &&
+          petition.status !== "CLOSED" &&
+          petition.status !== "REJECTED"
       ).length,
-      processing: petitions.filter((petition) =>
-        ["ASSIGNED", "IN_REVIEW", "FORWARDED"].includes(
-          petition.status
-        )
+      myAssigned: petitions.filter(
+        (petition) =>
+          petition.assignedStaff !== null &&
+          petition.assignedStaff.id === user?.id
       ).length,
       completed: petitions.filter((petition) =>
         ["ANSWERED", "CLOSED"].includes(petition.status)
       ).length,
     }),
-    [petitions]
+    [petitions, user]
   );
 
   if (sessionLoading) {
@@ -239,7 +297,7 @@ export default function PersonelDashboardPage() {
   return (
     <div className="page-wrapper">
       <main className="main-content">
-        <h1 className="page-title">Personel Yönetim Paneli</h1>
+        <h1 className="page-title">Birim Personeli Paneli</h1>
 
         {error && (
           <div
@@ -251,7 +309,40 @@ export default function PersonelDashboardPage() {
           </div>
         )}
 
-        <div className="quick-actions">
+        {claimError && (
+          <div
+            className="alert alert-error"
+            role="alert"
+            style={{ marginBottom: 20 }}
+          >
+            ⚠️ {claimError}
+          </div>
+        )}
+
+        <div className="stats-grid" style={{ marginBottom: 24 }}>
+          <StatCard
+            icon="📥"
+            value={stats.total}
+            label="Toplam Başvuru"
+          />
+          <StatCard
+            icon="📋"
+            value={stats.unassigned}
+            label="Atanmamış"
+          />
+          <StatCard
+            icon="👤"
+            value={stats.myAssigned}
+            label="Benim Atandıklarım"
+          />
+          <StatCard
+            icon="✅"
+            value={stats.completed}
+            label="Tamamlanan"
+          />
+        </div>
+
+        <div className="quick-actions" style={{ marginBottom: 24 }}>
           <button
             type="button"
             className="quick-action-btn"
@@ -262,60 +353,6 @@ export default function PersonelDashboardPage() {
             <span className="qa-icon">➕</span>
             <span className="qa-label">Yeni Başvuru</span>
           </button>
-
-          {user.role === "ADMIN" && (
-            <>
-              <button
-                type="button"
-                className="quick-action-btn"
-                onClick={() =>
-                  router.push("/dashboard/admin/categories")
-                }
-              >
-                <span className="qa-icon">🗂️</span>
-                <span className="qa-label">
-                  Kategori Yönetimi
-                </span>
-              </button>
-
-              <button
-                type="button"
-                className="quick-action-btn"
-                onClick={() =>
-                  router.push("/dashboard/admin/units")
-                }
-              >
-                <span className="qa-icon">🏢</span>
-                <span className="qa-label">Birim Yönetimi</span>
-              </button>
-            </>
-          )}
-        </div>
-
-        <div className="stats-grid" style={{ marginBottom: 24 }}>
-          <StatCard
-            icon="📥"
-            value={stats.total}
-            label="Toplam Başvuru"
-          />
-
-          <StatCard
-            icon="🆕"
-            value={stats.received}
-            label="Yeni Başvuru"
-          />
-
-          <StatCard
-            icon="🔄"
-            value={stats.processing}
-            label="İşlemde"
-          />
-
-          <StatCard
-            icon="✅"
-            value={stats.completed}
-            label="Tamamlanan"
-          />
         </div>
 
         <div className="card">
@@ -329,7 +366,9 @@ export default function PersonelDashboardPage() {
               flexWrap: "wrap",
             }}
           >
-            <span className="card-title">📄 Başvurular</span>
+            <span className="card-title">
+              📄 Birim Başvuruları
+            </span>
 
             <button
               type="button"
@@ -354,7 +393,7 @@ export default function PersonelDashboardPage() {
               <input
                 type="search"
                 className="form-control"
-                placeholder="Takip kodu, ad soyad, konu veya birim ara..."
+                placeholder="Takip kodu, ad soyad veya konu ara..."
                 value={searchText}
                 onChange={(event) =>
                   setSearchText(event.target.value)
@@ -373,7 +412,6 @@ export default function PersonelDashboardPage() {
                 }
               >
                 <option value="ALL">Tüm durumlar</option>
-
                 {Object.entries(STATUS_LABELS)
                   .filter(
                     ([status]) =>
@@ -406,12 +444,7 @@ export default function PersonelDashboardPage() {
                     margin: "0 auto 14px",
                   }}
                 />
-
-                <p
-                  style={{
-                    color: "var(--text-muted)",
-                  }}
-                >
+                <p style={{ color: "var(--text-muted)" }}>
                   Başvurular yükleniyor...
                 </p>
               </div>
@@ -430,7 +463,6 @@ export default function PersonelDashboardPage() {
                 >
                   📭
                 </div>
-
                 <h2
                   style={{
                     fontSize: 17,
@@ -439,7 +471,6 @@ export default function PersonelDashboardPage() {
                 >
                   Başvuru bulunamadı
                 </h2>
-
                 <p
                   style={{
                     margin: 0,
@@ -447,7 +478,8 @@ export default function PersonelDashboardPage() {
                     fontSize: 13,
                   }}
                 >
-                  Seçilen ölçütlere uygun bir başvuru bulunmuyor.
+                  Seçilen ölçütlere uygun bir başvuru
+                  bulunmuyor.
                 </p>
               </div>
             ) : (
@@ -462,10 +494,16 @@ export default function PersonelDashboardPage() {
                   <PetitionCard
                     key={petition.id}
                     petition={petition}
+                    isClaiming={
+                      claimingId === petition.id
+                    }
                     onOpen={() =>
                       router.push(
-                        `/dashboard/personel/basvurular/${petition.id}`
+                        `/dashboard/birim-personeli/basvurular/${petition.id}`
                       )
+                    }
+                    onClaim={() =>
+                      handleClaim(petition.id)
                     }
                   />
                 ))}
@@ -476,8 +514,8 @@ export default function PersonelDashboardPage() {
       </main>
 
       <footer className="footer">
-        <strong>Mersin Üniversitesi</strong> — Dilek &amp; Öneri
-        Sistemi © {new Date().getFullYear()}
+        <strong>Mersin Üniversitesi</strong> — Dilek
+        &amp; Öneri Sistemi © {new Date().getFullYear()}
       </footer>
     </div>
   );
@@ -485,171 +523,97 @@ export default function PersonelDashboardPage() {
 
 function PetitionCard({
   petition,
+  isClaiming,
   onOpen,
+  onClaim,
 }: {
   petition: Petition;
+  isClaiming: boolean;
   onOpen: () => void;
+  onClaim: () => void;
 }) {
+  const isUnassigned =
+    petition.assignedStaff === null &&
+    petition.status !== "CLOSED" &&
+    petition.status !== "REJECTED";
+
   return (
     <article
-      role="button"
-      tabIndex={0}
-      onClick={onOpen}
-      onKeyDown={(event) => {
-        if (event.key === "Enter" || event.key === " ") {
-          event.preventDefault();
-          onOpen();
-        }
-      }}
-      style={{
-        padding: 16,
-        border: "1px solid var(--border)",
-        borderRadius: "var(--radius)",
-        background: "var(--surface)",
-        cursor: "pointer",
-        transition:
-          "border-color 0.2s ease, box-shadow 0.2s ease, transform 0.2s ease",
-      }}
-      onMouseEnter={(event) => {
-        event.currentTarget.style.borderColor = "#2c5282";
-        event.currentTarget.style.boxShadow =
-          "0 8px 24px rgba(15, 23, 42, 0.08)";
-        event.currentTarget.style.transform =
-          "translateY(-1px)";
-      }}
-      onMouseLeave={(event) => {
-        event.currentTarget.style.borderColor =
-          "var(--border)";
-        event.currentTarget.style.boxShadow = "none";
-        event.currentTarget.style.transform =
-          "translateY(0)";
-      }}
+      className="petition-item"
+      style={
+        isUnassigned
+          ? {
+              borderLeft: "3px solid var(--warning, #d97706)",
+            }
+          : undefined
+      }
     >
-      <div
-        style={{
-          display: "flex",
-          justifyContent: "space-between",
-          alignItems: "flex-start",
-          gap: 14,
-          flexWrap: "wrap",
-        }}
-      >
-        <div style={{ flex: 1, minWidth: 220 }}>
-          <div
-            style={{
-              display: "flex",
-              alignItems: "center",
-              gap: 8,
-              flexWrap: "wrap",
-              marginBottom: 8,
-            }}
-          >
-            <span
-              style={{
-                fontFamily: "monospace",
-                fontSize: 12,
-                color: "var(--text-muted)",
-              }}
-            >
-              {petition.trackingCode}
-            </span>
-
-            <span
-              style={{
-                fontSize: 12,
-                fontWeight: 600,
-              }}
-            >
-              🏷️ {petition.category.name}
-            </span>
-          </div>
-
-          <h2
-            style={{
-              margin: "0 0 8px",
-              fontSize: 16,
-            }}
-          >
-            {petition.subject}
-          </h2>
-
-          <p
-            style={{
-              margin: "0 0 6px",
-              color: "var(--text-secondary)",
-              fontSize: 13,
-            }}
-          >
-            Başvuru sahibi:{" "}
-            <strong>
-              {petition.applicantFirstName}{" "}
-              {petition.applicantLastName}
-            </strong>
-          </p>
-
-          <p
-            style={{
-              margin: 0,
-              color: "var(--text-muted)",
-              fontSize: 12,
-            }}
-          >
-            Birim: {petition.targetUnit.name} ·{" "}
-            {formatDate(petition.createdAt)}
-          </p>
-        </div>
-
-        <div
-          style={{
-            minWidth: 160,
-            textAlign: "right",
-          }}
-        >
-          <p
-            style={{
-              margin: "0 0 6px",
-              fontSize: 12,
-              fontWeight: 700,
-            }}
+      <div className="petition-item-left">
+        <p className="petition-tracking">
+          {petition.trackingCode}
+        </p>
+        <h2 className="petition-subject">
+          {petition.subject}
+        </h2>
+        <div className="petition-meta">
+          <span
+            className={`status-badge ${STATUS_CLASS[petition.status]}`}
           >
             {STATUS_LABELS[petition.status]}
-          </p>
-
-          <p
-            style={{
-              margin: "0 0 6px",
-              color: "var(--text-muted)",
-              fontSize: 12,
-            }}
-          >
-            Öncelik:{" "}
-            {PRIORITY_LABELS[petition.priority]}
-          </p>
-
-          <p
-            style={{
-              margin: "0 0 10px",
-              color: "var(--text-muted)",
-              fontSize: 12,
-            }}
-          >
-            Atanan:{" "}
-            {petition.assignedStaff
-              ? `${petition.assignedStaff.firstName} ${petition.assignedStaff.lastName}`
-              : "Atanmadı"}
-          </p>
-
-          <span
-            style={{
-              display: "inline-block",
-              color: "#2c5282",
-              fontSize: 12,
-              fontWeight: 700,
-            }}
-          >
-            Detayı Aç →
           </span>
+          <span className="cat-badge">
+            {petition.category.name}
+          </span>
+          <span>
+            {petition.applicantFirstName}{" "}
+            {petition.applicantLastName}
+          </span>
+          <span>
+            Öncelik: {PRIORITY_LABELS[petition.priority]}
+          </span>
+          {petition.assignedStaff && (
+            <span>
+              Atanan: {petition.assignedStaff.firstName}{" "}
+              {petition.assignedStaff.lastName}
+            </span>
+          )}
         </div>
+        <p className="petition-date">
+          {formatDate(petition.createdAt)}
+        </p>
+      </div>
+      <div
+        className="petition-item-right"
+        style={{
+          display: "flex",
+          flexDirection: "column",
+          alignItems: "flex-end",
+          gap: 8,
+        }}
+      >
+        {isUnassigned && (
+          <button
+            type="button"
+            className="btn btn-primary btn-sm"
+            disabled={isClaiming}
+            onClick={(event) => {
+              event.stopPropagation();
+              onClaim();
+            }}
+            style={{ whiteSpace: "nowrap" }}
+          >
+            {isClaiming
+              ? "Üstleniliyor..."
+              : "🏷️ Görevi Üstlen"}
+          </button>
+        )}
+        <button
+          type="button"
+          className="btn btn-ghost btn-sm"
+          onClick={onOpen}
+        >
+          Detayı Aç →
+        </button>
       </div>
     </article>
   );
@@ -694,9 +658,8 @@ function LoadingPage() {
             margin: "0 auto 16px",
           }}
         />
-
         <p style={{ color: "var(--text-muted)" }}>
-          Personel paneli yükleniyor...
+          Birim personeli paneli yükleniyor...
         </p>
       </div>
     </div>

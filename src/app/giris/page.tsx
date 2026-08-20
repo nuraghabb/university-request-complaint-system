@@ -244,11 +244,14 @@ function redirectByRole(
 ) {
   switch (role) {
     case "ADMIN":
-    case "UNIT_MANAGER":
-    case "UNIT_STAFF":
-      router.replace("/dashboard/personel");
+      router.replace("/dashboard/admin");
       break;
-
+    case "UNIT_MANAGER":
+      router.replace("/dashboard/birim-muduru");
+      break;
+    case "UNIT_STAFF":
+      router.replace("/dashboard/birim-personeli");
+      break;
     default:
       router.replace("/giris");
   }

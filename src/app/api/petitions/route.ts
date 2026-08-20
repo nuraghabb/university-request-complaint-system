@@ -218,7 +218,10 @@ export async function GET(request: NextRequest) {
               },
             }
           : {
-              targetUnitId: staffUser.unitId ?? -1,
+              OR: [
+                { targetUnitId: staffUser.unitId ?? -1 },
+                { createdByStaffId: staffUser.id },
+              ],
               emailVerifiedAt: {
                 not: null,
               },

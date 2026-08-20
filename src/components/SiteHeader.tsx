@@ -10,67 +10,40 @@ import {
   type SessionUser,
 } from "./useSession";
 
-const ROLE_LABELS: Record<string, string> = {
-  ADMIN: "Sistem Yöneticisi",
-  UNIT_MANAGER: "Birim Yöneticisi",
-  UNIT_STAFF: "Birim Personeli",
-  STUDENT: "Öğrenci",
-  ACADEMIC: "Akademisyen",
-};
-
-const ROLE_BADGES: Record<string, string> = {
-  ADMIN: "badge-admin",
-  UNIT_MANAGER: "badge-manager",
-  UNIT_STAFF: "badge-staff",
-  STUDENT: "badge-student",
-  ACADEMIC: "badge-academic",
-};
-
-const NAV_ITEMS = [
-  { href: "/", label: "Ana Sayfa" },
-  { href: "/basvuru-misafir", label: "Başvuru Oluştur" },
-  { href: "/basvuru-takip", label: "Başvuru Takip" },
+const ADMIN_NAV_ITEMS = [
+  { href: "/dashboard/admin", label: "Admin Paneli" },
+  { href: "/dashboard/admin/categories", label: "Kategoriler" },
+  { href: "/dashboard/admin/units", label: "Birimler" },
+  { href: "/dashboard/admin/personel", label: "Personel" },
 ];
 
-const ADMIN_NAV_ITEMS = [
-  { href: "/dashboard/admin/categories", label: "Kategori Yönetimi" },
-  { href: "/dashboard/admin/units", label: "Birim Yönetimi" },
+const MANAGER_NAV_ITEMS = [
+  { href: "/dashboard/birim-muduru", label: "Birim Paneli" },
+  { href: "/dashboard/birim-muduru/personel", label: "Personel Yönetimi" },
+];
+
+const STAFF_NAV_ITEMS = [
+  { href: "/dashboard/birim-personeli", label: "Birim Paneli" },
 ];
 
 function getNavItems(user: SessionUser | null) {
-  const isLoggedIn = Boolean(user);
-
-  const items = NAV_ITEMS.map((item) => {
-    if (item.href === "/") {
-      return {
-        ...item,
-        href: isLoggedIn && user ? getDashboardPath(user.role) : "/",
-      };
-    }
-    if (item.href === "/basvuru-misafir") {
-      return {
-        ...item,
-        href: isLoggedIn
-          ? "/dashboard/basvuru-olustur"
-          : "/basvuru-misafir",
-      };
-    }
-    return item;
-  });
-
-  if (user?.role === "ADMIN") {
-    items.push(...ADMIN_NAV_ITEMS);
+  if (!user) {
+    return [
+      { href: "/", label: "Ana Sayfa" },
+      { href: "/basvuru-misafir", label: "Başvuru Oluştur" },
+      { href: "/basvuru-takip", label: "Başvuru Takip" },
+    ];
   }
 
-  return items;
+  if (user.role === "ADMIN") return [...ADMIN_NAV_ITEMS];
+  if (user.role === "UNIT_MANAGER") return [...MANAGER_NAV_ITEMS];
+  if (user.role === "UNIT_STAFF") return [...STAFF_NAV_ITEMS];
+
+  return [];
 }
 
-function getRoleLabel(role: string): string {
-  return ROLE_LABELS[role] ?? role;
-}
-
-function getRoleBadge(role: string): string {
-  return ROLE_BADGES[role] ?? "";
+function getInitials(firstName: string, lastName: string): string {
+  return `${firstName.charAt(0)}${lastName.charAt(0)}`.toUpperCase();
 }
 
 export default function SiteHeader() {
@@ -80,31 +53,16 @@ export default function SiteHeader() {
   const { user, checking } = useSession();
   const [menuOpen, setMenuOpen] = useState(false);
 
-  async function handleLogout() {
-    try {
-      await fetch("/api/auth/logout", {
-        method: "POST",
-        credentials: "include",
-      });
-    } finally {
-      setMenuOpen(false);
-      router.push("/");
-      router.refresh();
-    }
-  }
-
   function isNavActive(href: string): boolean {
-    if (href === "/") {
-      return pathname === "/";
-    }
-
+    if (href === "/") return pathname === "/";
     return pathname.startsWith(href);
   }
 
   const navItems = useMemo(() => getNavItems(user), [user]);
 
-  const dashboardPath = user ? getDashboardPath(user.role) : null;
-  const brandHref = user ? dashboardPath ?? "/" : "/";
+  const brandHref = user
+    ? getDashboardPath(user.role)
+    : "/";
 
   return (
     <header className="site-header">
@@ -147,36 +105,16 @@ export default function SiteHeader() {
 
         <div className="site-actions">
           {checking ? null : user ? (
-            <>
-              <span className="user-chip">
-                <span
-                  className={`user-badge ${getRoleBadge(user.role)}`}
-                >
-                  {getRoleLabel(user.role)}
-                </span>
-
-                <span className="user-name">
-                  {user.firstName} {user.lastName}
-                </span>
+            <Link
+              href="/dashboard/profil"
+              className="profile-avatar-btn"
+              title={`${user.firstName} ${user.lastName}`}
+              onClick={() => setMenuOpen(false)}
+            >
+              <span className="profile-avatar">
+                {getInitials(user.firstName, user.lastName)}
               </span>
-
-              {dashboardPath && (
-                <Link
-                  href={dashboardPath}
-                  className="btn btn-outline btn-sm"
-                >
-                  Panel
-                </Link>
-              )}
-
-              <button
-                type="button"
-                className="btn btn-ghost btn-sm"
-                onClick={() => void handleLogout()}
-              >
-                Çıkış
-              </button>
-            </>
+            </Link>
           ) : (
             <>
               <Link href="/giris" className="btn btn-outline btn-sm">
@@ -226,39 +164,17 @@ export default function SiteHeader() {
 
           <div className="mobile-user-area">
             {user ? (
-              <>
-                <div className="mobile-user-info">
-                  <span
-                    className={`user-badge ${getRoleBadge(user.role)}`}
-                  >
-                    {getRoleLabel(user.role)}
-                  </span>
-
-                  <span className="user-name">
-                    {user.firstName} {user.lastName}
-                  </span>
-                </div>
-
-                <div className="mobile-actions">
-                  {dashboardPath && (
-                    <Link
-                      href={dashboardPath}
-                      className="btn btn-outline btn-sm btn-full"
-                      onClick={() => setMenuOpen(false)}
-                    >
-                      Panel
-                    </Link>
-                  )}
-
-                  <button
-                    type="button"
-                    className="btn btn-ghost btn-sm btn-full"
-                    onClick={() => void handleLogout()}
-                  >
-                    Çıkış Yap
-                  </button>
-                </div>
-              </>
+              <Link
+                href="/dashboard/profil"
+                className="btn btn-outline btn-sm btn-full"
+                onClick={() => setMenuOpen(false)}
+                style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 8 }}
+              >
+                <span className="profile-avatar profile-avatar-sm">
+                  {getInitials(user.firstName, user.lastName)}
+                </span>
+                Profil
+              </Link>
             ) : (
               <div className="mobile-actions">
                 <Link

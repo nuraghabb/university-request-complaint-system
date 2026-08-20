@@ -112,5 +112,14 @@ export function getDashboardPathForPayload(
       : "/dashboard/ogrenci";
   }
 
-  return "/dashboard/personel";
+  switch (payload.role) {
+    case "ADMIN":
+      return "/dashboard/admin";
+    case "UNIT_MANAGER":
+      return "/dashboard/birim-muduru";
+    case "UNIT_STAFF":
+      return "/dashboard/birim-personeli";
+    default:
+      return "/dashboard/personel";
+  }
 }

@@ -149,17 +149,6 @@ export default function AuthenticatedPetitionPage() {
   return (
     <main className="main-content" style={{ maxWidth: 860 }}>
       <div>
-        <div style={{ marginBottom: 16 }}>
-          <button
-            type="button"
-            className="btn btn-ghost"
-            onClick={() => router.push(dashboardPath)}
-            style={{ fontSize: 14 }}
-          >
-            ← Panele Dön
-          </button>
-        </div>
-
         <AuthenticatedPetitionForm
           user={user}
           onSuccess={handleSuccess}
