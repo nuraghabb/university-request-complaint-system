@@ -541,7 +541,7 @@ async function main(): Promise<void> {
   await seedCategories();
   await seedUnits();
   await seedStaffUsers();
-  await seedInternalUsers();
+  //await seedInternalUsers();
   await seedSamplePetitions();
 
   console.log("✅ Seed işlemi tamamlandı.");
